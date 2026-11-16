@@ -1,0 +1,11 @@
+.ql-container.rtl {
+  direction: rtl;
+  text-align: right;
+}
+.ql-container.ltr {
+  direction: ltr;
+  text-align: left;
+}
+.ql-editor {
+  min-height: 200px;
+}

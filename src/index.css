@@ -1,0 +1,177 @@
+/* Base Styles */
+/* Define the Arabic font family */
+@font-face {
+  font-family: "Louguiya";
+  src: url("./assets/fonts/Louguiya.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Louguiya";
+  src: url("./assets/fonts/LouguiyaBold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "LouguiyaFR";
+  src: url("./assets/fonts/LouguiyaFR.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-red: #ce1f26;
+  --primary-yellow: #ffd700;
+  --primary-green: #00a95c;
+  --dark-blue: #003366;
+  --light-blue: #1a4b8c;
+  --light-gray: #f5f5f5;
+  --medium-gray: #666666;
+  --dark-gray: #333333;
+  --white: #ffffff;
+  --black: #000000;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+body {
+  font-family: "Louguiya", sans-serif;
+  color: var(--dark-gray);
+  line-height: 1.6;
+  background-color: var(--white);
+}
+
+/* Font classes */
+.font-arabic {
+  font-family: "Louguiya", sans-serif;
+}
+
+.font-french {
+  font-family: "LouguiyaFR", sans-serif;
+}
+
+/* RTL and LTR support */
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Ensure proper spacing for both directions */
+.rtl .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+.ltr .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+}
+
+/* Fix flexbox behavior for RTL */
+.rtl .flex-row-reverse {
+  flex-direction: row-reverse;
+}
+
+/* Quill editor RTL support */
+.ql-editor[dir="rtl"] ul {
+  padding-right: 1.5em;
+  direction: rtl;
+}
+
+.ql-editor[dir="rtl"] li {
+  direction: rtl;
+  text-align: right;
+  list-style-position: inside;
+}
+
+/* Additional utility classes */
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--primary-red);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background-color: #b0181a;
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--primary-red);
+  border: 2px solid var(--primary-red);
+}
+
+.btn-outline:hover {
+  background-color: var(--primary-red);
+  color: var(--white);
+}
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+  color: var(--primary-green);
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background-color: var(--primary-red);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Custom gradient for header */
+.bg-gradient-custom {
+  background: linear-gradient(135deg, var(--primary-green) 0%, #008048 100%);
+}
+
+/* Custom shadow */
+.shadow-custom {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
