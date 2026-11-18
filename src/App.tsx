@@ -68,6 +68,14 @@ const App: React.FC = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/ministry" element={<Ministry />} />
+                <Route
+                  path="/projects"
+                  element={<Ministry initialSection="projects" />}
+                />
+                <Route
+                  path="/procedures"
+                  element={<Ministry initialSection="tasks" />}
+                />
                 <Route path="/news" element={<News />} />
                 <Route path="/news/:id" element={<NewsDetail />} />
                 <Route path="/announcements" element={<Announcements />} />

@@ -20,29 +20,68 @@ import {
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 
-const Ministry: React.FC = () => {
+const cleanHtmlTags = (text: string) => {
+  if (!text) return "";
+  return text
+    .replace(/<p><p>/g, "")
+    .replace(/<p>/g, "")
+    .replace(/<\/p>/g, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/&nbsp;/g, " ")
+    .replace(/<[^>]*>/g, "")
+    .trim();
+};
+
+interface MinistryProps {
+  initialSection?: "projects" | "tasks";
+}
+
+const Ministry: React.FC<MinistryProps> = ({ initialSection }) => {
   const [minister, setMinister] = useState<Minister | null>(null);
   const [loading, setLoading] = useState(true);
   const { language } = useLanguage();
 
   useEffect(() => {
+    const fetchMinister = async () => {
+      try {
+        setLoading(true);
+        const response = await getMinisters();
+        if (response.data && response.data.length > 0) {
+          const firstMinister = response.data[0];
+          const ministerData: Minister = {
+            ...firstMinister,
+            textarabe: cleanHtmlTags(firstMinister.textarabe || ""),
+            textfrancais: cleanHtmlTags(firstMinister.textfrancais || ""),
+            image: firstMinister.image?.startsWith("data:")
+              ? firstMinister.image
+              : firstMinister.image
+              ? `data:image/jpeg;base64,${firstMinister.image}`
+              : "https://via.placeholder.com/250x300/007a45/FFFFFF?text=وزير+العقارات",
+          };
+          setMinister(ministerData);
+        }
+      } catch (error) {
+        console.error("Error fetching minister:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchMinister();
   }, []);
 
-  const ministerData = [
-    {
-      name: {
-        ar: "المختار أحمد بوسيف",
-        fr: "Moctar Ahmed Bousseif",
-      },
-      title: {
-        ar: "وزير العقارات وأملاك الدولة",
-        fr: "Ministre des Domaines et des Affaires Foncières",
-      },
-      image:
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/No-image-available.png/480px-No-image-available.png",
-    },
-  ];
+  useEffect(() => {
+    if (!initialSection) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(initialSection)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialSection]);
 
   // ✅ ministry info
   const ministryData = {
@@ -142,44 +181,6 @@ const Ministry: React.FC = () => {
         "Développement de mécanismes de partenariat avec le secteur privé",
       ],
     },
-  };
-
-  // nettoyer le texte des balises html
-  const cleanHtmlTags = (text: string) => {
-    if (!text) return "";
-    return text
-      .replace(/<p><p>/g, "")
-      .replace(/<p>/g, "")
-      .replace(/<\/p>/g, "\n")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/&nbsp;/g, " ")
-      .replace(/<[^>]*>/g, "")
-      .trim();
-  };
-
-  const fetchMinister = async () => {
-    try {
-      setLoading(true);
-      const response = await getMinisters();
-      if (response.data && response.data.length > 0) {
-        const firstMinister = response.data[0];
-        const ministerData: Minister = {
-          ...firstMinister,
-          textarabe: cleanHtmlTags(firstMinister.textarabe || ""),
-          textfrancais: cleanHtmlTags(firstMinister.textfrancais || ""),
-          image: firstMinister.image?.startsWith("data:")
-            ? firstMinister.image
-            : firstMinister.image
-            ? `data:image/jpeg;base64,${firstMinister.image}`
-            : "https://via.placeholder.com/250x300/007a45/FFFFFF?text=وزير+العقارات",
-        };
-        setMinister(ministerData);
-      }
-    } catch (error) {
-      console.error("Error fetching minister:", error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   // Direction
@@ -295,7 +296,7 @@ const Ministry: React.FC = () => {
       </section>
 
       {/* Tasks Section */}
-      <section className="py-16 bg-white" id="tasks">
+      <section className="scroll-mt-32 py-16 bg-white" id="tasks">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center p-3 bg-mauritania-green-light rounded-full mb-4">
@@ -375,7 +376,7 @@ const Ministry: React.FC = () => {
       </section>
 
       {/* Projects Section */}
-      <section className="py-16 bg-white">
+      <section className="scroll-mt-32 py-16 bg-white" id="projects">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center p-3 bg-mauritania-green-light rounded-full mb-4">

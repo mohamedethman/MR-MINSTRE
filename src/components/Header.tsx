@@ -1,353 +1,217 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useLanguage } from "../context/LanguageContext";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBars,
-  faTimes,
-  faAngleDown,
-  faAngleUp,
-} from "@fortawesome/free-solid-svg-icons";
+import { faBars, faTimes, faUser } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { getInformation } from "../services/api";
 import { Information } from "../types/types";
 
 const Header: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
   const [information, setInformation] = useState<Information | null>(null);
   const { isAuthenticated, logout } = useAuth();
   const { language, toggleLanguage } = useLanguage();
-  const navigate = useNavigate();
   const location = useLocation();
-  const dropdownRef = useRef<HTMLUListElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const navigate = useNavigate();
+  const isArabic = language === "ar";
 
   useEffect(() => {
-    fetchInformation();
+    getInformation()
+      .then((response) => {
+        if (response.data?.length) setInformation(response.data[0]);
+      })
+      .catch(() => undefined);
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setActiveDropdown(null);
-      }
+    let animationFrame = 0;
+    const updateHeaderSize = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(() => {
+        setIsCompact(window.scrollY > 48);
+        animationFrame = 0;
+      });
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    updateHeaderSize();
+    window.addEventListener("scroll", updateHeaderSize, { passive: true });
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", updateHeaderSize);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
     };
   }, []);
 
-  const fetchInformation = async () => {
-    try {
-      const response = await getInformation();
-      if (response.data && response.data.length > 0) {
-        setInformation(response.data[0]);
-      }
-    } catch (error) {
-      console.error("Error fetching information:", error);
+  const ministryName = isArabic
+    ? "وزارة العقارات وأملاك الدولة والإصلاح العقاري"
+    : "Ministère des Domaines, du Patrimoine de l’État et de la Réforme foncière";
+  const republicName = isArabic
+    ? "الجمهورية الإسلامية الموريتانية"
+    : "République Islamique de Mauritanie";
+  const labels = isArabic
+    ? ["الرئيسية", "الأخبار", "الوزارة", "المشاريع", "الإجراءات والخدمات", "إعلانات", "تواصل معنا"]
+    : ["Accueil", "Actualités", "Le ministère", "Projets", "Procédures et services", "Annonces", "Contact"];
+  const paths = ["/", "/news", "/ministry", "/projects", "/procedures", "/announcements", "/contact"];
+  const logoSource = information?.logo
+    ? information.logo.startsWith("data:")
+      ? information.logo
+      : `data:image/jpeg;base64,${information.logo}`
+    : null;
+
+  const closeMenu = () => setMenuOpen(false);
+  const active = (path: string) => {
+    const pagePath = path.split("#")[0];
+    const hash = path.split("#")[1];
+    if (location.pathname === pagePath) {
+      return hash ? location.hash === `#${hash}` : !location.hash;
     }
+    return !hash && pagePath === "/news" && location.pathname.startsWith("/news/");
   };
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const toggleDropdown = (dropdown: string) => {
-    setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
-  };
-
-  const handleDropdownMouseEnter = (dropdown: string) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    setActiveDropdown(dropdown);
-  };
-
-  const handleDropdownMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setActiveDropdown(null);
-    }, 300); // 300ms delay before closing
-  };
-
   const handleLogout = () => {
     logout();
     navigate("/");
+    closeMenu();
   };
-
-  const handleLanguageToggle = () => {
-    toggleLanguage();
-  };
-
-  // Check if a link is active
-  const isActiveLink = (path: string) => {
-    return location.pathname === path;
-  };
-
-  // Translation for header items
-  const getHeaderTranslation = (key: string) => {
-    const translations: Record<string, { ar: string; fr: string }> = {
-      home: { ar: "الرئيسية", fr: "Accueil" },
-      ministry: { ar: "الوزارة", fr: "Ministère" },
-      aboutMinistry: { ar: "عن الوزارة", fr: "À propos" },
-      minister: { ar: "الوزير", fr: "Ministre" },
-      tasks: { ar: "المهام", fr: "Missions" },
-      structure: { ar: "الهيكلة الإدارية", fr: "Structure" },
-      news: { ar: "الأخبار", fr: "Actualités" },
-      announcements: { ar: "إعلانات الوزارة", fr: "Annonces" },
-      legislation: { ar: "التشريعات", fr: "Législation" },
-      contact: { ar: "تواصل معنا", fr: "Contact" },
-      login: { ar: "لوحة التحكم", fr: "Administration" },
-      logout: { ar: "تسجيل الخروج", fr: "Déconnexion" },
-    };
-
-    return translations[key]?.[language] || key;
-  };
-
-  // Direction class based on language
-  const getDirectionClass = () => {
-    return language === "ar" ? "rtl" : "ltr";
-  };
-
-  // Text alignment class based on language
-  const getTextAlignClass = () => {
-    return language === "ar" ? "text-right" : "text-left";
+  const logo = (size: "desktop" | "mobile") => {
+    const dimensions = size === "desktop"
+      ? (isCompact ? "h-14 w-14" : "h-20 w-20")
+      : (isCompact ? "h-12 w-12" : "h-16 w-16");
+    return logoSource ? (
+      <img
+        src={logoSource}
+        alt={isArabic ? "شعار الوزارة" : "Logo du ministère"}
+        className={`${dimensions} shrink-0 rounded-full border-2 border-white/30 object-cover shadow-md transition-all duration-300 ease-in-out`}
+      />
+    ) : (
+      <span
+        aria-hidden="true"
+        className={`${dimensions} flex shrink-0 items-center justify-center rounded-full border-2 border-white/30 bg-white/20 text-xl font-bold text-mauritania-gold shadow-md transition-all duration-300 ease-in-out`}
+      >
+        م
+      </span>
+    );
   };
 
   return (
     <header
-      className={`bg-gradient-to-r from-mauritania-green-dark to-mauritania-green text-white shadow-custom sticky top-0 z-50 border-b-4 border-[#ce1f26] ${getDirectionClass()}`}
+      className={`sticky top-0 z-50 border-[#ce1f26] bg-gradient-to-r from-mauritania-green-dark to-mauritania-green text-white shadow-custom transition-[border-width,box-shadow] duration-300 ease-in-out ${isCompact ? "border-b-2" : "border-b-4"}`}
+      dir={isArabic ? "rtl" : "ltr"}
     >
-      <div className="container mx-auto px-6 flex justify-between items-center">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <img
-            src={
-              information?.logo
-                ? `data:image/jpeg;base64,${information.logo}`
-                : "https://via.placeholder.com/50x50/00a95c/FFFFFF?text=MO"
-            }
-            alt="Ministry Logo"
-            className="h-12 w-12 rounded-full object-cover"
-          />
-          <div className={getTextAlignClass()}>
-            <h1 className="text-lg font-bold">
-              {information?.nomsite ||
-                (language === "ar"
-                  ? "وزارة العقارات وأملاك الدولة"
-                  : "Ministère des Domaines et des Affaires Foncières")}
-            </h1>
-            <p className="text-xs opacity-90">
-              {language === "ar"
-                ? "الجمهورية الإسلامية الموريتانية"
-                : "République Islamique de Mauritanie"}
-            </p>
+      <div className="hidden border-b border-white/20 md:block">
+        <div className={`container mx-auto flex items-center justify-between px-6 transition-[padding] duration-300 ease-in-out ${isCompact ? "gap-3 py-1.5" : "gap-4 py-3"}`}>
+          <Link to="/" className="flex min-w-0 items-center gap-4">
+            {logo("desktop")}
+            <div className={isArabic ? "text-right" : "text-left"}>
+              <p className={`overflow-hidden text-sm font-semibold text-white/90 transition-[max-height,opacity,margin] duration-300 ease-in-out ${isCompact ? "mb-0 max-h-0 opacity-0" : "max-h-6 opacity-100"}`}>{republicName}</p>
+              <h1 className={`font-bold leading-snug transition-[font-size,margin] duration-300 ease-in-out ${isCompact ? "mt-0 text-lg" : "mt-1 text-xl"}`}>
+                {information?.nomsite || ministryName}
+              </h1>
+            </div>
+          </Link>
+
+          <div className="flex shrink-0 items-center gap-4">
+            <Link
+              to={isAuthenticated ? "/admin/dashboard" : "/admin/login"}
+              aria-label={isArabic ? "لوحة التحكم" : "Espace administration"}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 transition-colors hover:bg-white/30"
+            >
+              <FontAwesomeIcon icon={faUser} className="text-lg" />
+            </Link>
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              aria-label={isArabic ? "Switch to French" : "Passer en arabe"}
+              className="flex min-w-[120px] items-center justify-center rounded-full border-2 border-white/30 bg-white/10 px-4 py-2 transition-colors hover:border-white/50 hover:bg-white/20"
+            >
+              <span className="text-sm font-semibold tracking-wide">
+                {isArabic ? "Français" : "العربية"}
+              </span>
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Language Switcher and Mobile menu toggle */}
-        <div className="flex items-center gap-4">
-          {/* Language Switcher */}
-          <button
-            onClick={handleLanguageToggle}
-            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 transition-colors rounded-full px-3 py-1"
-            title={language === "ar" ? "Switch to French" : "Changer à l'Arabe"}
+      <div className={`container mx-auto flex items-center justify-between gap-4 px-4 transition-[padding] duration-300 ease-in-out md:hidden ${isCompact ? "py-2" : "py-4"}`}>
+        <Link to="/" onClick={closeMenu} className="flex min-w-0 items-center gap-3">
+          {logo("mobile")}
+          <div className={isArabic ? "text-right" : "text-left"}>
+            <p className={`overflow-hidden text-xs font-semibold leading-tight text-white/90 transition-[max-height,opacity] duration-300 ease-in-out ${isCompact ? "max-h-0 opacity-0" : "max-h-5 opacity-100"}`}>{republicName}</p>
+            <h1 className={`font-bold leading-tight transition-[font-size,margin] duration-300 ease-in-out ${isCompact ? "mt-0 text-sm" : "mt-1 text-base"}`}>
+              {information?.nomsite || ministryName}
+            </h1>
+          </div>
+        </Link>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            to={isAuthenticated ? "/admin/dashboard" : "/admin/login"}
+            aria-label={isArabic ? "لوحة التحكم" : "Espace administration"}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 transition-colors hover:bg-white/30"
           >
-            <img
-              src={
-                language === "ar"
-                  ? "https://flagcdn.com/w40/fr.png"
-                  : "https://flagcdn.com/w40/mr.png"
-              }
-              alt={language === "ar" ? "French flag" : "Mauritanian flag"}
-              className="w-6 h-4 object-cover rounded"
-            />
-            <span className="text-sm font-medium">
-              {language === "ar" ? "FR" : "AR"}
-            </span>
+            <FontAwesomeIcon icon={faUser} />
+          </Link>
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            aria-label={isArabic ? "Switch to French" : "Passer en arabe"}
+            className="rounded-full border-2 border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold transition-colors hover:bg-white/20"
+          >
+            {isArabic ? "FR" : "AR"}
           </button>
-
-          {/* Mobile menu toggle */}
-          <button className="md:hidden" onClick={toggleMenu}>
-            <FontAwesomeIcon icon={isMenuOpen ? faTimes : faBars} size="lg" />
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? (isArabic ? "إغلاق القائمة" : "Fermer le menu") : (isArabic ? "فتح القائمة" : "Ouvrir le menu")}
+            aria-expanded={menuOpen}
+            className="flex h-10 w-10 items-center justify-center rounded transition-colors hover:bg-white/10"
+          >
+            <FontAwesomeIcon icon={menuOpen ? faTimes : faBars} />
           </button>
         </div>
+      </div>
 
-        {/* Navigation */}
-        <nav
-          className={`${
-            isMenuOpen ? "right-0" : "-right-full"
-          } fixed md:static top-0 h-screen md:h-auto w-3/4 md:w-auto bg-mauritania-green-dark md:bg-transparent transition-all duration-300 ease-in-out md:flex md:items-center md:space-x-6 z-40 pt-20 md:pt-0 px-6 md:px-0 ${
-            language === "fr" ? "md:space-x-6" : "md:space-x-reverse"
-          }`}
-        >
-          <ul
-            className={`flex flex-col md:flex-row md:gap-6 gap-4 ${
-              language === "ar" ? "text-right" : "text-left"
-            }`}
-          >
-            <li>
-              <Link
-                to="/"
-                className={`hover:text-[#ce1f26] transition pb-1 ${
-                  isActiveLink("/")
-                    ? "border-b-2 border-[#ce1f26] font-semibold"
-                    : ""
-                }`}
-              >
-                {getHeaderTranslation("home")}
-              </Link>
-            </li>
-
-            {/* Dropdown */}
-            <li
-              className="relative"
-              onMouseEnter={() => handleDropdownMouseEnter("ministry")}
-              onMouseLeave={handleDropdownMouseLeave}
-            >
-              <button
-                className={`flex items-center gap-1 hover:text-[#ce1f26] transition pb-1 ${
-                  location.pathname.startsWith("/ministry")
-                    ? "border-b-2 border-[#ce1f26] font-semibold"
-                    : ""
-                } ${language === "fr" ? "flex-row" : "flex-row-reverse"}`}
-                onClick={() => toggleDropdown("ministry")}
-              >
-                {getHeaderTranslation("ministry")}
-                <FontAwesomeIcon
-                  icon={activeDropdown === "ministry" ? faAngleUp : faAngleDown}
-                  className="mt-1"
-                />
-              </button>
-              <ul
-                ref={dropdownRef}
-                className={`absolute ${
-                  language === "ar" ? "right-0" : "left-0"
-                } mt-2 bg-mauritania-green-dark rounded-lg shadow-lg min-w-[180px] text-sm ${
-                  activeDropdown === "ministry" ? "block" : "hidden"
-                }`}
-              >
-                <li>
-                  <Link
-                    to="/ministry"
-                    className={`block px-4 py-2 hover:bg-[#ce1f26] ${
-                      isActiveLink("/ministry")
-                        ? "bg-[#ce1f26] font-semibold"
-                        : ""
-                    }`}
-                  >
-                    {getHeaderTranslation("aboutMinistry")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/minister"
-                    className="block px-4 py-2 hover:bg-[#ce1f26]"
-                  >
-                    {getHeaderTranslation("minister")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/ministry#tasks"
-                    className="block px-4 py-2 hover:bg-[#ce1f26]"
-                  >
-                    {getHeaderTranslation("tasks")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/ministry#structure"
-                    className="block px-4 py-2 hover:bg-[#ce1f26]"
-                  >
-                    {getHeaderTranslation("structure")}
-                  </Link>
-                </li>
-              </ul>
-            </li>
-
-            <li>
-              <Link
-                to="/news"
-                className={`hover:text-[#ce1f26] transition pb-1 ${
-                  isActiveLink("/news")
-                    ? "border-b-2 border-[#ce1f26] font-semibold"
-                    : ""
-                }`}
-              >
-                {getHeaderTranslation("news")}
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/announcements"
-                className={`hover:text-[#ce1f26] transition pb-1 ${
-                  isActiveLink("/announcements")
-                    ? "border-b-2 border-[#ce1f26] font-semibold"
-                    : ""
-                }`}
-              >
-                {getHeaderTranslation("announcements")}
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/legislation"
-                className={`hover:text-[#ce1f26] transition pb-1 ${
-                  isActiveLink("/legislation")
-                    ? "border-b-2 border-[#ce1f26] font-semibold"
-                    : ""
-                }`}
-              >
-                {getHeaderTranslation("legislation")}
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/contact"
-                className={`hover:text-[#ce1f26] transition pb-1 ${
-                  isActiveLink("/contact")
-                    ? "border-b-2 border-[#ce1f26] font-semibold"
-                    : ""
-                }`}
-              >
-                {getHeaderTranslation("contact")}
-              </Link>
-            </li>
-
-            {isAuthenticated ? (
-              <li>
-                <button
-                  onClick={handleLogout}
-                  className="hover:text-[#ce1f26] transition"
-                >
-                  {getHeaderTranslation("logout")}
-                </button>
-              </li>
-            ) : (
-              <li>
+      <nav aria-label={isArabic ? "التنقل الرئيسي" : "Navigation principale"}>
+        <div className="container mx-auto px-4 md:px-6">
+          <ul className={`${menuOpen ? "flex" : "hidden"} flex-col transition-[padding] duration-300 ease-in-out ${isCompact ? "py-1" : "py-2"} md:flex md:flex-row md:items-stretch md:justify-center md:py-0`}>
+            {labels.map((label, index) => (
+              <li key={paths[index]}>
                 <Link
-                  to="/admin/login"
-                  className={`hover:text-[#ce1f26] transition pb-1 ${
-                    isActiveLink("/admin/login")
-                      ? "border-b-2 border-[#ce1f26] font-semibold"
-                      : ""
+                  to={paths[index]}
+                  onClick={closeMenu}
+                  aria-current={active(paths[index]) ? "page" : undefined}
+                  className={`block border-b-2 px-4 text-sm font-semibold transition-[padding,color,border-color] duration-300 ${isCompact ? "py-2 md:py-2" : "py-3 md:py-4"} ${
+                    active(paths[index])
+                      ? "border-mauritania-gold text-mauritania-gold"
+                      : "border-transparent text-white hover:text-mauritania-gold"
                   }`}
                 >
-                  {getHeaderTranslation("login")}
+                  {label}
                 </Link>
               </li>
-            )}
+            ))}
+            <li>
+              {isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="block w-full px-4 py-3 text-start text-sm text-white/80 hover:text-mauritania-gold md:py-4"
+                >
+                  {isArabic ? "تسجيل الخروج" : "Déconnexion"}
+                </button>
+              ) : (
+                <Link
+                  to="/admin/login"
+                  onClick={closeMenu}
+                  className="block px-4 py-3 text-sm text-white/80 hover:text-mauritania-gold md:py-4"
+                >
+                  {isArabic ? "لوحة التحكم" : "Administration"}
+                </Link>
+              )}
+            </li>
           </ul>
-        </nav>
-      </div>
+        </div>
+      </nav>
     </header>
   );
 };

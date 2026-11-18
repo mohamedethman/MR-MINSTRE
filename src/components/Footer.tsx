@@ -1,224 +1,85 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faMapMarkerAlt,
-  faPhone,
-  faEnvelope,
-  faClock,
-} from "@fortawesome/free-solid-svg-icons";
-import {
-  faFacebookF,
-  faTwitter,
-  faLinkedinIn,
-  faYoutube,
-} from "@fortawesome/free-brands-svg-icons";
+import { faFacebookF } from "@fortawesome/free-brands-svg-icons";
+import { useLanguage } from "../context/LanguageContext";
+import { getInformation } from "../services/api";
+import { Information } from "../types/types";
 
 const Footer: React.FC = () => {
+  const { language } = useLanguage();
+  const isArabic = language === "ar";
+  const [information, setInformation] = useState<Information | null>(null);
+
+  useEffect(() => {
+    getInformation()
+      .then((response) => {
+        if (response.data?.length) setInformation(response.data[0]);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const ministryName = isArabic
+    ? "وزارة العقارات وأملاك الدولة والإصلاح العقاري"
+    : "Ministère des Domaines, du Patrimoine de l’État et de la Réforme foncière";
+  const republicName = isArabic
+    ? "الجمهورية الإسلامية الموريتانية"
+    : "République Islamique de Mauritanie";
+  const logoSource = information?.logo
+    ? information.logo.startsWith("data:")
+      ? information.logo
+      : `data:image/jpeg;base64,${information.logo}`
+    : null;
+
   return (
-    <footer className="bg-mauritania-green-dark text-white py-16 px-8">
-      <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="footer-col">
-          <h3 className="text-mauritania-gold text-xl font-bold mb-6 pb-2 relative after:content-[''] after:absolute after:bottom-0 after:right-0 after:w-12 after:h-0.5 after:bg-mauritania-gold">
-            روابط سريعة
-          </h3>
-          <ul className="space-y-2">
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                الرئيسية
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                عن الوزارة
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                معالي الوزير
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                مهام الوزارة
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                الهيكل التنظيمي
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div className="footer-col">
-          <h3 className="text-mauritania-gold text-xl font-bold mb-6 pb-2 relative after:content-[''] after:absolute after:bottom-0 after:right-0 after:w-12 after:h-0.5 after:bg-mauritania-gold">
-            الخدمات
-          </h3>
-          <ul className="space-y-2">
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                الاستعلام العقاري
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                التوثيق العقاري
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                الاستثمار العقاري
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                التعويضات
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                خدمات أخرى
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div className="footer-col">
-          <h3 className="text-mauritania-gold text-xl font-bold mb-6 pb-2 relative after:content-[''] after:absolute after:bottom-0 after:right-0 after:w-12 after:h-0.5 after:bg-mauritania-gold">
-            المواقع الحكومية
-          </h3>
-          <ul className="space-y-2">
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                رئاسة الجمهورية
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                رئاسة الحكومة
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                الجريدة الرسمية
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                الخدمة المدنية
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="text-gray-300 hover:text-mauritania-gold hover:pr-2 transition duration-300"
-              >
-                وزارة المالية
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div className="footer-col">
-          <h3 className="text-mauritania-gold text-xl font-bold mb-6 pb-2 relative after:content-[''] after:absolute after:bottom-0 after:right-0 after:w-12 after:h-0.5 after:bg-mauritania-gold">
-            اتصل بنا
-          </h3>
-          <div className="contact-item flex items-center gap-3 mb-4">
-            <div className="contact-icon w-10 h-10 bg-mauritania-green text-white rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faMapMarkerAlt} />
-            </div>
-            <span>شارع الوزارة، نواكشوط، موريتانيا</span>
-          </div>
-          <div className="contact-item flex items-center gap-3 mb-4">
-            <div className="contact-icon w-10 h-10 bg-mauritania-green text-white rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faPhone} />
-            </div>
-            <span>+222 1234 5678</span>
-          </div>
-          <div className="contact-item flex items-center gap-3 mb-4">
-            <div className="contact-icon w-10 h-10 bg-mauritania-green text-white rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faEnvelope} />
-            </div>
-            <span>contact@mre.gov.mr</span>
-          </div>
-          <div className="contact-item flex items-center gap-3 mb-6">
-            <div className="contact-icon w-10 h-10 bg-mauritania-green text-white rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faClock} />
-            </div>
-            <span>الأحد - الخميس: 8:00 صباحاً - 4:00 مساءً</span>
-          </div>
-          <div className="social-links flex gap-4">
-            <a
-              href="#"
-              className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-mauritania-gold hover:text-mauritania-green-dark transition duration-300"
+    <footer className="border-t border-gray-200 bg-white text-gray-700" dir={isArabic ? "rtl" : "ltr"}>
+      <div className="container mx-auto flex flex-col items-center justify-between gap-6 px-8 py-6 md:flex-row">
+        <div className="flex items-center gap-4">
+          {logoSource ? (
+            <img
+              src={logoSource}
+              alt={isArabic ? "شعار الوزارة" : "Logo du ministère"}
+              className="h-12 w-12 shrink-0 rounded-full border border-gray-300 object-cover"
+            />
+          ) : (
+            <span
+              aria-hidden="true"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-gray-300 bg-mauritania-green text-sm font-bold text-white"
             >
-              <FontAwesomeIcon icon={faFacebookF} />
-            </a>
-            <a
-              href="#"
-              className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-mauritania-gold hover:text-mauritania-green-dark transition duration-300"
-            >
-              <FontAwesomeIcon icon={faTwitter} />
-            </a>
-            <a
-              href="#"
-              className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-mauritania-gold hover:text-mauritania-green-dark transition duration-300"
-            >
-              <FontAwesomeIcon icon={faLinkedinIn} />
-            </a>
-            <a
-              href="#"
-              className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-mauritania-gold hover:text-mauritania-green-dark transition duration-300"
-            >
-              <FontAwesomeIcon icon={faYoutube} />
-            </a>
+              {isArabic ? "م" : "MO"}
+            </span>
+          )}
+          <div className={isArabic ? "text-right" : "text-left"}>
+            <p className="text-xs font-semibold leading-tight text-gray-600">{republicName}</p>
+            <h2 className="mt-1 text-sm font-bold text-gray-800 md:text-base">{ministryName}</h2>
           </div>
         </div>
+
+        <nav
+          aria-label={isArabic ? "روابط سريعة" : "Liens rapides"}
+          className="flex items-center gap-6 text-sm font-medium"
+        >
+          <Link to="/" className="transition-colors hover:text-[#ce1f26]">
+            {isArabic ? "الرئيسية" : "Accueil"}
+          </Link>
+          <Link to="/contact" className="transition-colors hover:text-[#ce1f26]">
+            {isArabic ? "اتصل بنا" : "Contact"}
+          </Link>
+          <a
+            href="https://web.facebook.com/profile.php?id=100092540392286"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Facebook"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-[#1877F2] hover:bg-[#1877F2] hover:text-white"
+          >
+            <FontAwesomeIcon icon={faFacebookF} />
+          </a>
+        </nav>
       </div>
-      <div className="container mx-auto text-center pt-8 mt-8 border-t border-white/10 text-gray-400 text-sm">
-        <p>
-          جميع الحقوق محفوظة © {new Date().getFullYear()} وزارة العقارات وأملاك
-          الدولة - جمهورية موريتانيا الإسلامية
-        </p>
+
+      <div className="space-y-1 border-t border-gray-200 px-6 py-4 text-center text-sm text-gray-500">
+        <p>© {new Date().getFullYear()} {ministryName} - {republicName}</p>
+        <p>{isArabic ? "إصدار المشروع" : "Version du projet"} v1.0 - 30-04-2026</p>
       </div>
     </footer>
   );

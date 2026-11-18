@@ -1,7 +1,7 @@
 {
   "name": "mre-ministry",
   "version": "0.1.0",
-  "homepage": "http://93.115.16.90/Domaines",
+  "homepage": "https://domaines.gov.mr",
   "private": true,
   "dependencies": {
     "@ckeditor/ckeditor5-alignment": "^46.0.2",
