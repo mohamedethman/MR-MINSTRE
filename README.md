@@ -1,5 +1,13 @@
 # Getting Started with Create React App
 
+## Backend
+
+The Spring Boot API is in [`backend/`](backend/README.md). Start its local API and PostgreSQL database with `docker compose up --build` from that folder. To connect this React app to it, copy `.env.example` to `.env.local` and restart the dev server.
+
+The backend's seeded `admin` / `123` account is for local development only. Replace it and all local secrets before deploying.
+
+---
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

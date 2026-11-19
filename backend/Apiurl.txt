@@ -1,0 +1,511 @@
+﻿URL :http://localhost:8090/
+
+
+AUTH : POST : api/auth/login : {"username": "admin","password": "123"}
+
+
+roles:
+ADD : POST : /api/roles :{ "name": "ADMIN" }
+LIST : GET : /api/roles 
+UPDATE : PUT : /api/roles/{id} : { "name": "NOUVEAU_NOM_ROLE" }
+DELETE : DELETE : /api/roles/{id}
+
+users:
+ADD : POST : /api/users :{ "username": "admin", "password": "123", "roleNames": ["ADMIN", "USER"] }
+LIST : GET : /api/users 
+UPDATE : PUT : /api/users/{id} : { "username": "newusername", "password": "newpass", "roleNames": ["USER"] }
+DELETE : DELETE : /api/users/{id}
+
+
+permissions :
+ADD : POST : /api/permissions :{"name": "PERM_ADMIN","roles": "ADMIN","urlPattern": "/api/admin/**"}
+LIST : GET : /api/permissions
+UPDATE : PUT : /api/permissions/{id} :{"name": "PERM_ADMIN","roles": "ADMIN","urlPattern": "/api/admin/**"}
+DELETE : DELETE : /api/permissions/{id}
+
+
+ministre :
+ADD : POST : /api/aproposministere :{
+  "titrearabe": "وزارة العقارات",
+  "titrefrancais": "Ministère des domaines",
+  "textarabe": "نص عربي",
+  "textfrancais": "Texte français",
+  "image": ""
+}
+( l'image encodée en Base64)
+
+LIST : GET : /api/aproposministere
+UPDATE : PUT : /api/aproposministere/{id} :
+DELETE : DELETE : /api/aproposministere/{id}
+
+
+ministrecontenuassocier
+
+
+ADD : POST : /api/ministerecontenuassocier :
+{
+  "titrearabe": "الرؤية",
+  "titrefrancais": "vision",
+  "textarabe": "نص عربي",
+  "textfrancais": "Texte français"
+}
+
+LIST : GET : /api/ministerecontenuassocier
+UPDATE : PUT : /api/ministerecontenuassocier/{id} :
+DELETE : DELETE : /api/ministerecontenuassocier/{id}
+
+
+leministre :
+
+
+ADD : POST : /api/leministre :
+{
+  "titrearabe": "وزير العقارات",
+  "titrefrancais": "le ministre des Domaines",
+  "textarabe": "نص عربي",
+  "textfrancais": "Texte français",
+  "image": "",
+  "cvarabe": "",
+  "cvfrancais": ""
+}
+( l'image et cv encodées en Base64)
+
+LIST : GET : /api/leministre
+UPDATE : PUT : /api/leministre/{id} :
+DELETE : DELETE : /api/leministre/{id}
+
+
+tachesministere
+
+ADD : POST : /api/tachesministere :
+{
+  "titrearabe": "عنوان المهمة",
+  "titrefrancais": "Tache titre"
+
+}
+
+LIST : GET : /api/tachesministere
+UPDATE : PUT : /api/tachesministere/{id} :
+DELETE : DELETE : /api/tachesministere/{id}
+
+listetaches
+
+ADD : POST : /api/listetaches :
+{ 
+  "tacheid":"1",
+  "titrearabe": "مهمة 1",
+  "titrefrancais": "Tache 1"
+
+}
+
+LIST : GET : /api/listetaches
+LIST BY TAHCE ID : GET : /api/listetaches/bytache/{id} 
+UPDATE : PUT : /api/listetaches/{id} 
+DELETE : DELETE : /api/listetaches/{id}
+
+
+
+actualitescategories:
+
+ADD : POST : /api/actualitescategories :
+{
+  "nomarabe": "تصنيف 1",
+  "nomfrancais": "Categorie 1"
+}
+
+LIST : GET : /api/actualitescategories
+UPDATE : PUT : /api/actualitescategories/{id} :
+DELETE : DELETE : /api/actualitescategories/{id}
+
+
+actualites:
+
+ADD : POST : /api/actualites :
+{
+  "titrearabe": "عنوان الخبر بالعربية",
+  "titrefrancais": "Titre de l'actualité en français",
+  "textarabe": "هذا نص الخبر باللغة العربية...",
+  "textfrancais": "Voici le texte de l'actualité en français...",
+  "image": "",  
+  "datepublication": "2025-08-15T10:30:00",
+  "categorieid": 1,
+  "lienar":'',
+  "lienfr":''
+}
+
+
+LIST : GET : /api/actualites
+LIST BY CATEGORIE ID : GET : /api/actualites/bycategorie/{id} 
+UPDATE : PUT : /api/actualites/{id} :
+DELETE : DELETE : /api/actualites/{id}
+
+
+
+
+lois :
+ADD : POST : /api/lois :
+{
+  "titrearabe": "قانون جديد",
+  "titrefrancais": "Nouvelle loi",
+  "datesortie": "2025-08-01",
+  "fichierarabe": "",
+  "fichierfrancais": ""
+}
+(fichier encodée en Base64)
+
+ //Récupérer les fichiers
+GET : /api/lois/fichierarabe/{id} 
+GET : /api/lois/fichierfrancais/{id} 
+
+LIST : GET : /api/lois
+LIST RAPIDE : GET : /api/lois/rapide
+UPDATE : PUT : /api/lois/{id} :
+DELETE : DELETE : /api/lois/{id}
+
+
+
+
+comptessociaux:
+ADD : POST : /api/comptessociaux :
+{
+  "nom": "Facebook",
+  "lien": "https://www.facebook.com/",
+  "icon": ""
+}
+
+(icon encodée en Base64)
+
+LIST : GET : /api/comptessociaux
+UPDATE : PUT : /api/comptessociaux/{id} :
+DELETE : DELETE : /api/comptessociaux/{id}
+
+
+
+messages:
+ADD : POST : /api/messages :
+{
+  "nom": "Ahmed",
+  "email": "ahmed@example.com",
+  "objet": "Demande d'information",
+  "message": "Bonjour, je voudrais avoir plus de détails sur vos services."
+}
+
+LIST : GET : /api/messages
+UPDATE : PUT : /api/messages/{id} :
+DELETE : DELETE : /api/messages/{id}
+
+
+
+mise a jour 08/09
+
+
+informations:
+ADD : POST : /api/informations :
+
+{
+  "nomsite": "Ministère des Domaines",
+  "nomsitear": "وزارة العقارات",
+  "logo": "", 
+  "adresse": "Rue du Ministère, Nouakchott, Mauritanie",
+  "adressear": "نواكشوط موريتانيا",
+  "telephone": "+222 1234 5678",
+  "email": "contact@mre.gov.mr",
+  "horaires": "Lun-Ven 9h-18h",
+  "horairesar": "الإثنين-الجمعة ٩ص-٦م"
+}
+
+
+(logo encodée en Base64)
+
+LIST : GET : /api/informations
+UPDATE : PUT : /api/informations/{id} :
+DELETE : DELETE : /api/informations/{id}
+
+
+slides
+
+ADD : POST : /api/slides :
+
+{
+  "titrearabe": "عنوان بالعربية",
+  "titrefrancais": "Titre en français",
+  "textarabe": "نص",
+  "textfrancais": "text",
+  "image": "", 
+  "etat": true,
+  "ordre": 1,
+  "buttons": [
+    {
+      "titrearabe": "زر ١",
+      "titrefrancais": "Bouton 1",
+      "lien": "https://example.com/page1"
+    },
+    {
+      "titrearabe": "زر ٢",
+      "titrefrancais": "Bouton 2",
+      "lien": "https://example.com/page2"
+    }
+  ]
+}
+
+
+(image encodée en Base64)
+
+LIST : GET : /api/slides
+UPDATE : PUT : /api/slides/{id} :
+DELETE : DELETE : /api/slides/{id}
+
+
+INSERT INTO public.permissions (url_pattern, name, role, methode)
+VALUES ('/api/slides/**', 'PERM_SLIDES', 'ADMIN', '*');
+
+
+mise a jour 17/09
+
+
+menu
+
+ADD : POST : /api/menu :
+
+{
+  "nomarabe": "القائمة 1",
+  "nomfrancais": "Menu1",
+  "lien": "/menu1",
+  "ordre": 2,
+  "etat": true,
+  "parentId": null
+}
+ //Récupérer les sous-menus d’un menu
+GET : /api/menu/sousmenus/{parentId} 
+
+LIST : GET : /api/menu
+UPDATE : PUT : /api/menu/{id} :
+DELETE : DELETE : /api/menu/{id}
+
+
+
+
+annonces:
+
+ADD : POST : /api/annonces :
+{
+  "titrearabe": "إعلان هام",
+  "titrefrancais": "Annonce importante",
+  "textarabe": "هذا نص الإعلان باللغة العربية...",
+  "textfrancais": "Voici le texte de l'annonce en français...",
+  "datepublication": "2025-08-15T12:00:00",
+  "image": "",  // (nouveau)
+}
+(image encodée en Base64)
+
+LIST : GET : /api/annonces
+UPDATE : PUT : /api/annonces/{id} :
+DELETE : DELETE : /api/annonces/{id}
+
+
+
+structureadministrative
+
+ADD : POST : /api/structureadministrative :
+{
+  "titrearabe": "الهيكلة الإدارية",
+  "titrefrancais": "Structure Administrative",
+  "fichierarabe":"",
+  "fichierfrancais":"",
+  "textarabe": "نص", // (nouveau)
+  "textfrancais": "text" // (nouveau)
+}
+(fichie encodée en Base64)
+
+LIST : GET : /api/structureadministrative
+UPDATE : PUT : /api/structureadministrative/{id} :
+DELETE : DELETE : /api/structureadministrative/{id}
+
+
+
+bibliothequecategorie:
+
+ADD : POST : /api/bibliothequecategorie:
+{
+  "nomarabe": "تصنيف 1",
+  "nomfrancais": "Categorie 1"
+}
+
+LIST : GET : /api/bibliothequecategorie
+UPDATE : PUT : /api/bibliothequecategorie/{id} :
+DELETE : DELETE : /api/bibliothequecategorie/{id}
+
+
+bibliotheque
+
+ADD : POST : /api/bibliotheque :
+{
+  "descriptionarabe": "وصف",
+  "descriptionfrancais": "description",
+  "fichiers": [
+    "", 
+    ""
+  ],
+  "liens": [
+    "https://exemple.com/lien1",
+    "https://exemple.com/lien2"
+  ],
+  "categorieId": 1,
+  "ordre": 1,
+  "etat": true
+}
+
+(fichies encodée en Base64)
+
+ //Récupérer bibliothèques liées à une catégorie donnée
+GET : /api/bibliotheque/categorie/{categorieId} 
+
+LIST : GET : /api/bibliotheque
+UPDATE : PUT : /api/bibliotheque/{id} :
+DELETE : DELETE : /api/bibliotheque/{id}
+
+
+----- MISE A JOUR 27/11
+
+sousetablissements
+
+ADD : POST : /api/sousetablissements :
+{
+  "titrearabe": "عنوان المؤسسة الفرعية",
+  "titrefrancais": "Titre du sous-établissement",
+  "descarabe": "وصف المؤسسة بالعربية",
+  "descfrancais": "Description du sous-établissement en français",
+  "lien": "https://www.example.com",
+  "logo": ""  // Base64 du logo
+}
+
+
+LIST : GET : /api/sousetablissements
+UPDATE : PUT : /api/sousetablissements/{id} :
+DELETE : DELETE : /api/sousetablissements/{id}
+
+
+
+cabinetministre
+
+ADD : POST : /api/cabinetministre :
+{
+  "titrearabe": "عنوان مكتب الوزير",
+  "titrefrancais": "Titre Cabinet du Ministre",
+  "descarabe": "وصف المكتب بالعربية",
+  "descfrancais": "Description du cabinet en français",
+  "fichier": ""  // Base64 PDF ou autre fichier
+}
+
+
+LIST : GET : /api/cabinetministre
+UPDATE : PUT : /api/cabinetministre/{id} :
+DELETE : DELETE : /api/cabinetministre/{id}
+
+
+videos:
+ADD : POST : /api/videos :
+{
+  "titrearabe": "عنوان الفيديو",
+  "titrefrancais": "Titre de la vidéo",
+  "descarabe": "وصف الفيديو بالعربية",
+  "descfrancais": "Description de la vidéo en français",
+  "fichier": "" ,  // Base64 fichier vidéo
+  "lien": "https://www.youtube.com/"
+}
+
+
+
+LIST : GET : /api/videos
+UPDATE : PUT : /api/videos/{id} :
+DELETE : DELETE : /api/videos/{id}
+
+projets:
+
+ADD : POST : /api/projets :
+{
+  "titrearabe": "عنوان المشروع",
+  "titrefrancais": "Titre du projet",
+  "descarabe": "وصف المشروع بالعربية",
+  "descfrancais": "Description du projet en français",
+  "lien": "https://www.example.com/projet",
+  "images": [
+    {
+      "image": ""  // Base64 image 1
+    },
+    {
+      "image": ""  // Base64 image 2
+    }
+  ]
+}
+
+
+
+LIST : GET : /api/projets
+UPDATE : PUT : /api/projets/{id} :
+DELETE : DELETE : /api/projets/{id}
+
+
+procedures-services:
+
+ADD : POST : /api/procedures-services :
+{
+  "titrearabe": "اجرائات",
+  "titrefrancais": "Procédure ",
+  "textarabe": "وصف",
+  "textfrancais": "Description détaillée de la procédure ",
+  "image": "", 
+  "fichier": ""
+}
+
+
+
+LIST : GET : /api/procedures-services
+UPDATE : PUT : /api/procedures-services/{id} :
+DELETE : DELETE : /api/procedures-services/{id}
+
+
+motministre:
+
+ADD : POST : /api/motministre :
+{
+  "titrearabe": "كلمة الوزير",
+  "titrefrancais": "Mot du Ministre",
+  "textarabe": "هذا هو نص الكلمة بالعربية.",
+  "textfrancais": "Voici le texte du mot en français."
+}
+
+
+
+
+LIST : GET : /api/motministre
+UPDATE : PUT : /api/motministre/{id} :
+DELETE : DELETE : /api/motministre/{id}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"C:\Program Files\PostgreSQL\17\bin\pg_dump.exe" -U postgres -d domaine --data-only --column-inserts > C:\logs\all_tables_inserts.sql
+
+
+"C:\Program Files\PostgreSQL\17\bin\pg_dump.exe" -U postgres -d domaine -t permissions --data-only --column-inserts > C:\logs\permissions_inserts.sql
+
+
+
+"C:\Program Files\PostgreSQL\17\bin\pg_dump.exe" -h 192.168.1.99 -U postgres -d sidmat --data-only --column-inserts --disable-triggers > C:\logs\sidmat_data.sql

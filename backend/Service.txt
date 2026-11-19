@@ -1,0 +1,31 @@
+Example systemd unit for a production deployment. Replace paths and create a
+dedicated service account and environment file for your server.
+
+[Unit]
+Description=Domaines API
+After=network.target
+
+[Service]
+User=domaines
+WorkingDirectory=/opt/domaines
+EnvironmentFile=/etc/domaines-api/domaines-api.env
+ExecStart=/usr/bin/java -jar /opt/domaines/Domaines.jar
+SuccessExitStatus=143
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+The environment file should define at least:
+
+SERVER_PORT=8090
+SPRING_DATASOURCE_URL=jdbc:postgresql://<database-host>:5432/<database-name>
+SPRING_DATASOURCE_USERNAME=<database-user>
+SPRING_DATASOURCE_PASSWORD=<private-database-password>
+JWT_SECRET=<private-random-secret-at-least-32-characters>
+CORS_ALLOWED_ORIGINS=https://<frontend-host>
+APP_MEDIA_STORAGE_PATH=/var/lib/domaines/assets
+APP_SEED_ENABLED=false
+
+Protect the environment file so only the service account and administrators
+can read it. Reload and restart the unit after changing its configuration.
