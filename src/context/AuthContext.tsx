@@ -1,11 +1,9 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import { login as authLogin, logout as authLogout } from "../services/auth";
-import { setAuthToken } from "../services/api";
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
+import { login as authLogin } from "../services/auth";
+import { setAuthToken, setUnauthorizedHandler } from "../services/api";
+import { clearSession, decodeJwt, loadSession, msUntilExpiry, saveSession, StoredUser } from "../services/session";
 
-interface User {
-  username: string;
-  email?: string;
-}
+type User = StoredUser;
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -16,43 +14,76 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [user, setUser] = useState<User | null>(null);
+// Restore the session before the first render, so a refresh on an /admin page
+// does not bounce to the login screen.
+const initialSession = loadSession();
+if (initialSession) setAuthToken(initialSession.token);
+
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [token, setToken] = useState<string | null>(initialSession?.token ?? null);
+  const [user, setUser] = useState<User | null>(initialSession?.user ?? null);
+
+  const logout = useCallback(() => {
+    clearSession();
+    setAuthToken("");
+    setToken(null);
+    setUser(null);
+  }, []);
 
   const login = async (username: string, password: string) => {
-    try {
-      const response = await authLogin(username, password);
+    const response = await authLogin(username, password);
+    const nextUser: User = {
+      username: response.username || decodeJwt(response.token)?.sub || username,
+      email: response.email,
+    };
+    setAuthToken(response.token);
+    saveSession(response.token, nextUser);
+    setToken(response.token);
+    setUser(nextUser);
+  };
 
-      // Save token in memory (not localStorage)
-      setAuthToken(response.token);
-
-      // Set user information
-      setUser({
-        username: response.username || username,
-        email: response.email,
-      });
-
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
+  // Log out automatically when the token expires while the page is open.
+  useEffect(() => {
+    if (!token) return;
+    const remaining = msUntilExpiry(token);
+    if (remaining <= 0) {
+      logout();
+      return;
     }
-  };
+    // setTimeout cannot wait longer than ~24.8 days; JWTs here last 24h.
+    const timer = window.setTimeout(logout, Math.min(remaining, 2_147_000_000));
+    return () => window.clearTimeout(timer);
+  }, [token, logout]);
 
-  const logout = () => {
-    authLogout();
+  // Log out when the backend rejects the token (expired, revoked, secret changed).
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      if (token) logout();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [token, logout]);
 
-    // Clear token from memory
-    setAuthToken("");
-    setIsAuthenticated(false);
-    setUser(null);
-  };
+  // Keep several open tabs in sync (logging out in one logs out the others).
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== "authToken") return;
+      const session = loadSession();
+      if (session) {
+        setAuthToken(session.token);
+        setToken(session.token);
+        setUser(session.user);
+      } else {
+        setAuthToken("");
+        setToken(null);
+        setUser(null);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated: Boolean(token), user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

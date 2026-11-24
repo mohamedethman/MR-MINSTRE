@@ -17,6 +17,8 @@ export interface Actualite {
   image?: any; // Base64
   datepublication: string; // ISO date string
   categorieid: number;
+  lienar?: string;
+  lienfr?: string;
 }
 // ========== ACTUALITES CATEGORIES ==========
 export interface ActualiteCategorie {
@@ -53,11 +55,74 @@ export interface Legislation {
 export interface Information {
   id?: number;
   nomsite: string;
+  nomsitear?: string;
   logo: string;
   adresse: string;
+  adressear?: string;
   telephone: string;
   email: string;
   horaires: string;
+  horairesar?: string;
+}
+
+export interface TacheMinistere {
+  id: number;
+  titrearabe: string;
+  titrefrancais: string;
+}
+
+export interface ListeTacheMinistere {
+  id: number;
+  tacheid: number;
+  titrearabe: string;
+  titrefrancais: string;
+}
+
+export interface StructureAdministrative {
+  id: number;
+  titrearabe: string;
+  titrefrancais: string;
+  textarabe?: string;
+  textfrancais?: string;
+  fichierarabe?: string;
+  fichierfrancais?: string;
+}
+
+export interface Projet {
+  id: number;
+  titrearabe: string;
+  titrefrancais: string;
+  descarabe?: string;
+  descfrancais?: string;
+  lien?: string;
+  images?: { id: number; image: string }[];
+}
+
+export interface SousEtablissement {
+  id: number;
+  titrearabe: string;
+  titrefrancais: string;
+  descarabe?: string;
+  descfrancais?: string;
+  lien?: string;
+  logo?: string;
+}
+
+export interface CompteSocial {
+  id: number;
+  nom: string;
+  lien: string;
+  icon?: string;
+}
+
+export interface Video {
+  id: number;
+  titrearabe: string;
+  titrefrancais: string;
+  descarabe?: string;
+  descfrancais?: string;
+  fichier?: string;
+  lien?: string;
 }
 
 // Add interface for Message

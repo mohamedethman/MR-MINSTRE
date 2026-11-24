@@ -13,6 +13,9 @@ import {
 import { Minister } from "../../types/types";
 import { toast } from "react-toastify";
 import AdminLayout from "./AdminLayout";
+import { useSingleRecordGuard } from "../../hooks/useSingleRecordGuard";
+import { useT } from "../../i18n";
+import { mediaUrl } from "../../utils/content";
 
 // ✅ Custom Quill Toolbar
 const quillModules = {
@@ -31,9 +34,14 @@ const MinisterForm: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const { t } = useT();
 
   const [isLoading, setIsLoading] = useState(false);
+  // Only one minister record is shown on the site: "new" redirects to the existing one.
+  const checkingSingle = useSingleRecordGuard(!isEditMode, "/aproposministere", (existingId) => `/admin/ministers/edit/${existingId}`);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Image exactly as stored by the backend (base64 or file name), re-sent unchanged on save.
+  const [storedImage, setStoredImage] = useState<string | null>(null);
   const [arabicText, setArabicText] = useState("");
   const [frenchText, setFrenchText] = useState("");
   const [arabicAlignment, setArabicAlignment] = useState<
@@ -78,16 +86,13 @@ const MinisterForm: React.FC = () => {
 
             // ✅ Properly format base64 image for preview
             if (minister.image) {
-              const isBase64 = !minister.image.startsWith("data:image/");
-              const formattedImage = isBase64
-                ? `data:image/jpeg;base64,${minister.image}`
-                : minister.image;
-              setImagePreview(formattedImage);
+              setStoredImage(minister.image);
+              setImagePreview(mediaUrl(minister.image));
             }
           }
         } catch (error) {
           console.error("Error fetching minister:", error);
-          toast.error("حدث خطأ أثناء جلب بيانات الوزير");
+          toast.error(t("حدث خطأ أثناء جلب بيانات الوزير", "Erreur lors du chargement des données du ministre"));
         } finally {
           setIsLoading(false);
         }
@@ -133,10 +138,8 @@ const MinisterForm: React.FC = () => {
       if (data.image && data.image.length > 0) {
         base64Image = await toBase64(data.image[0]);
       } else if (imagePreview) {
-        // Use existing imagePreview
-        base64Image = imagePreview.startsWith("data:image/")
-          ? imagePreview.split(",")[1]
-          : imagePreview;
+        // Unchanged image: send back what the backend gave us (base64 or file name).
+        base64Image = storedImage ?? (imagePreview.startsWith("data:") ? imagePreview.split(",")[1] : imagePreview);
       }
 
       const payload = {
@@ -156,20 +159,28 @@ const MinisterForm: React.FC = () => {
       // ✅ Always call the API regardless of image change
       if (isEditMode) {
         await updateMinister(parseInt(id!), payload);
-        toast.success("تم تحديث بيانات الوزير بنجاح");
+        toast.success(t("تم تحديث بيانات الوزير بنجاح", "Données du ministre mises à jour avec succès"));
       } else {
         await createMinister(payload);
-        toast.success("تم إضافة الوزير بنجاح");
+        toast.success(t("تم إضافة الوزير بنجاح", "Ministre ajouté avec succès"));
       }
 
       navigate("/admin/ministers");
     } catch (error) {
       console.error("Error saving minister:", error);
-      toast.error("حدث خطأ أثناء حفظ البيانات");
+      toast.error(t("حدث خطأ أثناء حفظ البيانات", "Erreur lors de l'enregistrement des données"));
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (checkingSingle) {
+    return (
+      <AdminLayout>
+        <p className="py-12 text-center text-gray-600">{t("جاري التحميل...", "Chargement…")}</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -208,14 +219,14 @@ const MinisterForm: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-mauritania-green-dark">
-            {isEditMode ? "تعديل بيانات الوزير" : "إضافة وزير جديد"}
+            {isEditMode ? t("تعديل بيانات الوزير", "Modifier les données du ministre") : t("إضافة وزير جديد", "Ajouter un ministre")}
           </h1>
           <button
             onClick={() => navigate("/admin/ministers")}
-            className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300"
+            className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300 inline-flex items-center gap-2"
           >
-            <FontAwesomeIcon icon={faArrowLeft} className="ml-2" />
-            رجوع
+            <FontAwesomeIcon icon={faArrowLeft} className="rtl:rotate-180" />
+            {t("رجوع", "Retour")}
           </button>
         </div>
 
@@ -231,13 +242,13 @@ const MinisterForm: React.FC = () => {
                   htmlFor="titrearabe"
                   className="block text-gray-700 mb-2"
                 >
-                  اللقب (عربي) *
+                  {t("اللقب (عربي)", "Titre en arabe")} *
                 </label>
                 <input
                   id="titrearabe"
                   dir="rtl"
                   type="text"
-                  {...register("titrearabe", { required: "هذا الحقل مطلوب" })}
+                  {...register("titrearabe", { required: t("هذا الحقل مطلوب", "Ce champ est obligatoire") })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.titrearabe ? "border-red-500" : "border-gray-300"
                   }`}
@@ -255,14 +266,14 @@ const MinisterForm: React.FC = () => {
                   htmlFor="titrefrancais"
                   className="block text-gray-700 mb-2"
                 >
-                  اللقب (فرنسي) *
+                  {t("اللقب (فرنسي)", "Titre en français")} *
                 </label>
                 <input
                   id="titrefrancais"
                   dir="ltr"
                   type="text"
                   {...register("titrefrancais", {
-                    required: "هذا الحقل مطلوب",
+                    required: t("هذا الحقل مطلوب", "Ce champ est obligatoire"),
                   })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.titrefrancais ? "border-red-500" : "border-gray-300"
@@ -281,38 +292,38 @@ const MinisterForm: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-gray-700 mb-2">
-                  محاذاة النص (عربي)
+                  {t("محاذاة النص (عربي)", "Alignement du texte arabe")}
                 </label>
                 <select
                   value={arabicAlignment}
                   onChange={(e) => setArabicAlignment(e.target.value as any)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="right">يمين</option>
-                  <option value="center">وسط</option>
-                  <option value="left">يسار</option>
+                  <option value="right">{t("يمين", "Droite")}</option>
+                  <option value="center">{t("وسط", "Centre")}</option>
+                  <option value="left">{t("يسار", "Gauche")}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-gray-700 mb-2">
-                  محاذاة النص (فرنسي)
+                  {t("محاذاة النص (فرنسي)", "Alignement du texte français")}
                 </label>
                 <select
                   value={frenchAlignment}
                   onChange={(e) => setFrenchAlignment(e.target.value as any)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="left">Left</option>
-                  <option value="center">Center</option>
-                  <option value="right">Right</option>
+                  <option value="left">{t("يسار", "Gauche")}</option>
+                  <option value="center">{t("وسط", "Centre")}</option>
+                  <option value="right">{t("يمين", "Droite")}</option>
                 </select>
               </div>
             </div>
 
             {/* Rich Text Editors */}
             <div className="mb-6">
-              <label className="block text-gray-700 mb-2">النص (عربي)</label>
+              <label className="block text-gray-700 mb-2">{t("النص (عربي)", "Contenu en arabe")}</label>
               <div
                 dir="rtl"
                 style={{ textAlign: arabicAlignment, color: textColor }}
@@ -329,7 +340,7 @@ const MinisterForm: React.FC = () => {
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-700 mb-2">النص (فرنسي)</label>
+              <label className="block text-gray-700 mb-2">{t("النص (فرنسي)", "Contenu en français")}</label>
               <div
                 dir="ltr"
                 style={{ textAlign: frenchAlignment, color: textColor }}
@@ -347,20 +358,20 @@ const MinisterForm: React.FC = () => {
 
             {/* Image Upload */}
             <div className="mb-6">
-              <label className="block text-gray-700 mb-2">محاذاة الصورة</label>
+              <label className="block text-gray-700 mb-2">{t("محاذاة الصورة", "Alignement de l'image")}</label>
               <select
                 value={imageAlignment}
                 onChange={(e) => setImageAlignment(e.target.value as any)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option value="left">يسار</option>
-                <option value="center">وسط</option>
-                <option value="right">يمين</option>
+                <option value="left">{t("يسار", "Gauche")}</option>
+                <option value="center">{t("وسط", "Centre")}</option>
+                <option value="right">{t("يمين", "Droite")}</option>
               </select>
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-700 mb-2">صورة الوزير</label>
+              <label className="block text-gray-700 mb-2">{t("صورة الوزير", "Photo du ministre")}</label>
               <input
                 type="file"
                 accept="image/*"
@@ -380,7 +391,7 @@ const MinisterForm: React.FC = () => {
                 >
                   <img
                     src={imagePreview}
-                    alt="Preview"
+                    alt={t("معاينة", "Aperçu")}
                     className="h-40 w-40 object-cover rounded-md"
                   />
                 </div>
@@ -390,7 +401,7 @@ const MinisterForm: React.FC = () => {
             {/* Color Pickers */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-gray-700 mb-2">لون النص</label>
+                <label className="block text-gray-700 mb-2">{t("لون النص", "Couleur du texte")}</label>
                 <input
                   type="color"
                   value={textColor}
@@ -400,7 +411,7 @@ const MinisterForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">لون الخلفية</label>
+                <label className="block text-gray-700 mb-2">{t("لون الخلفية", "Couleur de fond")}</label>
                 <input
                   type="color"
                   value={backgroundColor}
@@ -415,10 +426,10 @@ const MinisterForm: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300"
+                className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 inline-flex items-center gap-2 disabled:opacity-50"
               >
-                <FontAwesomeIcon icon={faSave} className="ml-2" />
-                {isLoading ? "جاري الحفظ..." : "حفظ البيانات"}
+                <FontAwesomeIcon icon={faSave} />
+                {isLoading ? t("جاري الحفظ...", "Enregistrement…") : t("حفظ البيانات", "Enregistrer")}
               </button>
             </div>
           </div>

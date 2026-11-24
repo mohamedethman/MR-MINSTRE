@@ -16,8 +16,12 @@ import {
   updateInformation,
 } from "../../services/api";
 import AdminLayout from "./AdminLayout";
+import { useT } from "../../i18n";
+import { mediaUrl } from "../../utils/content";
+import { MINISTRY_NAME } from "../../utils/site";
 
 const InformationAdmin: React.FC = () => {
+  const { t } = useT();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -34,7 +38,6 @@ const InformationAdmin: React.FC = () => {
   useEffect(() => {
     fetchInformation();
   }, []);
-
   const fetchInformation = async () => {
     try {
       setIsLoading(true);
@@ -48,7 +51,7 @@ const InformationAdmin: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching information:", error);
-      toast.error("حدث خطأ أثناء جلب البيانات");
+      toast.error(t("حدث خطأ أثناء جلب البيانات", "Erreur lors du chargement des données"));
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +70,7 @@ const InformationAdmin: React.FC = () => {
       if (file.type.startsWith("image/")) {
         setLogoFile(file);
       } else {
-        toast.error("الرجاء اختيار ملف صورة");
+        toast.error(t("الرجاء اختيار ملف صورة", "Veuillez sélectionner un fichier image"));
       }
     }
   };
@@ -100,21 +103,24 @@ const InformationAdmin: React.FC = () => {
 
       const payload = {
         ...formData,
+        // The ministry name is fixed; always store the official names.
+        nomsite: MINISTRY_NAME.fr,
+        nomsitear: MINISTRY_NAME.ar,
         logo: base64Logo,
       };
 
       if (formData.id) {
         await updateInformation(formData.id, payload);
-        toast.success("تم تحديث المعلومات بنجاح");
+        toast.success(t("تم تحديث المعلومات بنجاح", "Informations mises à jour avec succès"));
       } else {
         await createInformation(payload);
-        toast.success("تم حفظ المعلومات بنجاح");
+        toast.success(t("تم حفظ المعلومات بنجاح", "Informations enregistrées avec succès"));
       }
 
       fetchInformation(); // Refresh data
     } catch (error) {
       console.error("Error saving information:", error);
-      toast.error("حدث خطأ أثناء حفظ البيانات");
+      toast.error(t("حدث خطأ أثناء حفظ البيانات", "Erreur lors de l'enregistrement des données"));
     } finally {
       setIsSaving(false);
     }
@@ -124,7 +130,11 @@ const InformationAdmin: React.FC = () => {
     return (
       <AdminLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mauritania-green"></div>
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2 border-mauritania-green"
+            role="status"
+            aria-label={t("جاري التحميل...", "Chargement…")}
+          ></div>
         </div>
       </AdminLayout>
     );
@@ -134,7 +144,7 @@ const InformationAdmin: React.FC = () => {
     <AdminLayout>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-mauritania-green-dark">
-          إدارة المعلومات العامة
+          {t("إدارة المعلومات العامة", "Gestion des informations générales")}
         </h1>
       </div>
 
@@ -142,19 +152,21 @@ const InformationAdmin: React.FC = () => {
         <form onSubmit={handleSubmit}>
           {/* Logo Upload */}
           <div className="mb-6">
-            <label className="block text-gray-700 mb-2">شعار الموقع</label>
-            <div className="flex items-center space-x-4">
+            <label className="block text-gray-700 mb-2">{t("شعار الموقع", "Logo du site")}</label>
+            <div className="flex items-center gap-4">
               {logoFile ? (
                 <div className="relative">
                   <img
                     src={URL.createObjectURL(logoFile)}
-                    alt="Logo preview"
+                    alt={t("معاينة الشعار", "Aperçu du logo")}
                     className="h-20 w-20 object-contain border rounded"
                   />
                   <button
                     type="button"
                     onClick={removeLogo}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    title={t("إزالة الشعار", "Retirer le logo")}
+                    aria-label={t("إزالة الشعار", "Retirer le logo")}
+                    className="absolute -top-2 -end-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                   >
                     <FontAwesomeIcon icon={faTimes} className="text-xs" />
                   </button>
@@ -162,8 +174,8 @@ const InformationAdmin: React.FC = () => {
               ) : existingLogo ? (
                 <div className="relative">
                   <img
-                    src={`data:image/jpeg;base64,${existingLogo}`}
-                    alt="Site logo"
+                    src={mediaUrl(existingLogo) || undefined}
+                    alt={t("شعار الموقع", "Logo du site")}
                     className="h-20 w-20 object-contain border rounded"
                   />
                 </div>
@@ -185,31 +197,50 @@ const InformationAdmin: React.FC = () => {
                   htmlFor="logo-upload"
                   className="bg-gray-200 text-gray-700 py-2 px-4 rounded cursor-pointer hover:bg-gray-300"
                 >
-                  اختر شعاراً
+                  {t("اختر شعاراً", "Choisir un logo")}
                 </label>
                 <p className="text-sm text-gray-500 mt-1">
-                  JPG, PNG, GIF - الحجم الأقصى 2MB
+                  {t("JPG, PNG, GIF - الحجم الأقصى 2MB", "JPG, PNG, GIF - taille maximale 2 Mo")}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Site Name */}
+          {/* Site Name (fixed official name, read-only) */}
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">اسم الموقع</label>
-            <input
-              type="text"
-              name="nomsite"
-              value={formData.nomsite}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green"
-              required
-            />
+            <label className="block text-gray-700 mb-2">{t("اسم الموقع", "Nom du site")}</label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <span className="mb-1 block text-xs text-gray-500">{t("بالعربية", "En arabe")}</span>
+                <input
+                  type="text"
+                  dir="rtl"
+                  value={MINISTRY_NAME.ar}
+                  readOnly
+                  aria-readonly="true"
+                  className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700"
+                />
+              </div>
+              <div>
+                <span className="mb-1 block text-xs text-gray-500">{t("بالفرنسية", "En français")}</span>
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={MINISTRY_NAME.fr}
+                  readOnly
+                  aria-readonly="true"
+                  className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-gray-700"
+                />
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              {t("الاسم الرسمي للوزارة ثابت ولا يمكن تعديله.", "Le nom officiel du ministère est fixe et ne peut pas être modifié.")}
+            </p>
           </div>
 
           {/* Address */}
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">العنوان</label>
+            <label className="block text-gray-700 mb-2">{t("العنوان", "Adresse")}</label>
             <input
               type="text"
               name="adresse"
@@ -222,7 +253,7 @@ const InformationAdmin: React.FC = () => {
 
           {/* Phone */}
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">الهاتف</label>
+            <label className="block text-gray-700 mb-2">{t("الهاتف", "Téléphone")}</label>
             <input
               type="tel"
               name="telephone"
@@ -236,7 +267,7 @@ const InformationAdmin: React.FC = () => {
           {/* Email */}
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">
-              البريد الإلكتروني
+              {t("البريد الإلكتروني", "E-mail")}
             </label>
             <input
               type="email"
@@ -250,7 +281,7 @@ const InformationAdmin: React.FC = () => {
 
           {/* Working Hours */}
           <div className="mb-6">
-            <label className="block text-gray-700 mb-2">ساعات العمل</label>
+            <label className="block text-gray-700 mb-2">{t("ساعات العمل", "Horaires de travail")}</label>
             <input
               type="text"
               name="horaires"
@@ -266,10 +297,12 @@ const InformationAdmin: React.FC = () => {
             <button
               type="submit"
               disabled={isSaving}
-              className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 disabled:opacity-50"
+              className="inline-flex items-center gap-2 bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 disabled:opacity-50"
             >
-              <FontAwesomeIcon icon={faSave} className="ml-2" />
-              {isSaving ? "جاري الحفظ..." : "حفظ التغييرات"}
+              <FontAwesomeIcon icon={faSave} />
+              {isSaving
+                ? t("جاري الحفظ...", "Enregistrement…")
+                : t("حفظ التغييرات", "Enregistrer les modifications")}
             </button>
           </div>
         </form>

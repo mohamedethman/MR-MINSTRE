@@ -17,6 +17,8 @@ import {
 import { Legislation } from "../../types/types";
 import { toast } from "react-toastify";
 import AdminLayout from "./AdminLayout";
+import { useT } from "../../i18n";
+import { downloadMedia, openMedia } from "../../utils/content";
 
 interface LegislationFormData {
   titrearabe: string;
@@ -32,6 +34,7 @@ const LegislationForm: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const { t } = useT();
 
   const [isLoading, setIsLoading] = useState(false);
   const [arabicFile, setArabicFile] = useState<FileWithPreview | null>(null);
@@ -68,7 +71,7 @@ const LegislationForm: React.FC = () => {
           }
         } catch (error) {
           console.error("Error fetching legislation:", error);
-          toast.error("حدث خطأ أثناء جلب بيانات التشريع");
+          toast.error(t("حدث خطأ أثناء جلب بيانات التشريع", "Erreur lors du chargement du texte législatif"));
         } finally {
           setIsLoading(false);
         }
@@ -140,23 +143,11 @@ const LegislationForm: React.FC = () => {
   };
 
   const handleDownload = (fileData: string, fileName: string) => {
-    if (!fileData) return;
-
-    const link = document.createElement("a");
-    link.href = `data:application/pdf;base64,${fileData}`;
-    link.download = fileName;
-    link.click();
+    downloadMedia(fileData, fileName, "application/pdf");
   };
 
   const handleView = (fileData: string) => {
-    if (!fileData) return;
-
-    const pdfWindow = window.open();
-    if (pdfWindow) {
-      pdfWindow.document.write(`
-        <iframe width="100%" height="100%" src="data:application/pdf;base64,${fileData}"></iframe>
-      `);
-    }
+    openMedia(fileData, "application/pdf");
   };
 
   const onSubmit = async (data: LegislationFormData) => {
@@ -189,16 +180,16 @@ const LegislationForm: React.FC = () => {
 
       if (isEditMode) {
         await updateLegislation(parseInt(id!), payload);
-        toast.success("تم تحديث التشريع بنجاح");
+        toast.success(t("تم تحديث التشريع بنجاح", "Texte législatif mis à jour avec succès"));
       } else {
         await createLegislation(payload);
-        toast.success("تم إضافة التشريع بنجاح");
+        toast.success(t("تم إضافة التشريع بنجاح", "Texte législatif ajouté avec succès"));
       }
 
       navigate("/admin/legislations");
     } catch (error) {
       console.error("Error saving legislation:", error);
-      toast.error("حدث خطأ أثناء حفظ البيانات");
+      toast.error(t("حدث خطأ أثناء حفظ البيانات", "Erreur lors de l'enregistrement des données"));
     } finally {
       setIsLoading(false);
     }
@@ -221,14 +212,14 @@ const LegislationForm: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-mauritania-green-dark">
-            {isEditMode ? "تعديل التشريع" : "إضافة تشريع جديد"}
+            {isEditMode ? t("تعديل التشريع", "Modifier le texte législatif") : t("إضافة تشريع جديد", "Ajouter un texte législatif")}
           </h1>
           <button
             onClick={() => navigate("/admin/legislations")}
-            className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300"
+            className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300 inline-flex items-center gap-2"
           >
-            <FontAwesomeIcon icon={faArrowLeft} className="ml-2" />
-            رجوع
+            <FontAwesomeIcon icon={faArrowLeft} className="rtl:rotate-180" />
+            {t("رجوع", "Retour")}
           </button>
         </div>
 
@@ -241,13 +232,13 @@ const LegislationForm: React.FC = () => {
                   htmlFor="titrearabe"
                   className="block text-gray-700 mb-2"
                 >
-                  العنوان (عربي) *
+                  {t("العنوان (عربي)", "Titre en arabe")} *
                 </label>
                 <input
                   id="titrearabe"
                   dir="rtl"
                   type="text"
-                  {...register("titrearabe", { required: "هذا الحقل مطلوب" })}
+                  {...register("titrearabe", { required: t("هذا الحقل مطلوب", "Ce champ est obligatoire") })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.titrearabe ? "border-red-500" : "border-gray-300"
                   }`}
@@ -264,13 +255,14 @@ const LegislationForm: React.FC = () => {
                   htmlFor="titrefrancais"
                   className="block text-gray-700 mb-2"
                 >
-                  العنوان (فرنسي) *
+                  {t("العنوان (فرنسي)", "Titre en français")} *
                 </label>
                 <input
                   id="titrefrancais"
+                  dir="ltr"
                   type="text"
                   {...register("titrefrancais", {
-                    required: "هذا الحقل مطلوب",
+                    required: t("هذا الحقل مطلوب", "Ce champ est obligatoire"),
                   })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.titrefrancais ? "border-red-500" : "border-gray-300"
@@ -287,12 +279,12 @@ const LegislationForm: React.FC = () => {
             {/* Date Input */}
             <div className="mb-6">
               <label htmlFor="datesortie" className="block text-gray-700 mb-2">
-                تاريخ الإصدار *
+                {t("تاريخ الإصدار", "Date de parution")} *
               </label>
               <input
                 id="datesortie"
                 type="date"
-                {...register("datesortie", { required: "هذا الحقل مطلوب" })}
+                {...register("datesortie", { required: t("هذا الحقل مطلوب", "Ce champ est obligatoire") })}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                   errors.datesortie ? "border-red-500" : "border-gray-300"
                 }`}
@@ -309,7 +301,7 @@ const LegislationForm: React.FC = () => {
               {/* Arabic File Upload */}
               <div>
                 <label className="block text-gray-700 mb-2">
-                  الملف (عربي) *
+                  {t("الملف (عربي)", "Fichier en arabe")} *
                 </label>
                 <div
                   className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
@@ -356,7 +348,7 @@ const LegislationForm: React.FC = () => {
                         }}
                         className="mt-2 text-red-500 hover:text-red-700"
                       >
-                        <FontAwesomeIcon icon={faTimes} /> إزالة
+                        <FontAwesomeIcon icon={faTimes} /> {t("إزالة", "Retirer")}
                       </button>
                     </div>
                   ) : existingArabicFile ? (
@@ -368,9 +360,9 @@ const LegislationForm: React.FC = () => {
                         />
                       </div>
                       <p className="text-sm font-medium text-green-700 mb-2">
-                        ملف موجود
+                        {t("ملف موجود", "Fichier existant")}
                       </p>
-                      <div className="flex space-x-2">
+                      <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -379,7 +371,7 @@ const LegislationForm: React.FC = () => {
                           }}
                           className="text-mauritania-green hover:text-mauritania-green-dark"
                         >
-                          <FontAwesomeIcon icon={faEye} /> معاينة
+                          <FontAwesomeIcon icon={faEye} /> {t("معاينة", "Aperçu")}
                         </button>
                         <button
                           type="button"
@@ -392,7 +384,7 @@ const LegislationForm: React.FC = () => {
                           }}
                           className="text-blue-600 hover:text-blue-800"
                         >
-                          <FontAwesomeIcon icon={faDownload} /> تحميل
+                          <FontAwesomeIcon icon={faDownload} /> {t("تحميل", "Télécharger")}
                         </button>
                       </div>
                     </div>
@@ -405,7 +397,7 @@ const LegislationForm: React.FC = () => {
                         />
                       </div>
                       <p className="text-sm text-gray-600">
-                        اسحب الملف هنا أو انقر للاختيار
+                        {t("اسحب الملف هنا أو انقر للاختيار", "Glissez le fichier ici ou cliquez pour le sélectionner")}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         PDF, DOC, DOCX
@@ -418,7 +410,7 @@ const LegislationForm: React.FC = () => {
               {/* French File Upload */}
               <div>
                 <label className="block text-gray-700 mb-2">
-                  الملف (فرنسي) *
+                  {t("الملف (فرنسي)", "Fichier en français")} *
                 </label>
                 <div
                   className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
@@ -465,7 +457,7 @@ const LegislationForm: React.FC = () => {
                         }}
                         className="mt-2 text-red-500 hover:text-red-700"
                       >
-                        <FontAwesomeIcon icon={faTimes} /> إزالة
+                        <FontAwesomeIcon icon={faTimes} /> {t("إزالة", "Retirer")}
                       </button>
                     </div>
                   ) : existingFrenchFile ? (
@@ -477,9 +469,9 @@ const LegislationForm: React.FC = () => {
                         />
                       </div>
                       <p className="text-sm font-medium text-green-700 mb-2">
-                        ملف موجود
+                        {t("ملف موجود", "Fichier existant")}
                       </p>
-                      <div className="flex space-x-2">
+                      <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -488,7 +480,7 @@ const LegislationForm: React.FC = () => {
                           }}
                           className="text-mauritania-green hover:text-mauritania-green-dark"
                         >
-                          <FontAwesomeIcon icon={faEye} /> معاينة
+                          <FontAwesomeIcon icon={faEye} /> {t("معاينة", "Aperçu")}
                         </button>
                         <button
                           type="button"
@@ -501,7 +493,7 @@ const LegislationForm: React.FC = () => {
                           }}
                           className="text-blue-600 hover:text-blue-800"
                         >
-                          <FontAwesomeIcon icon={faDownload} /> تحميل
+                          <FontAwesomeIcon icon={faDownload} /> {t("تحميل", "Télécharger")}
                         </button>
                       </div>
                     </div>
@@ -514,7 +506,7 @@ const LegislationForm: React.FC = () => {
                         />
                       </div>
                       <p className="text-sm text-gray-600">
-                        اسحب الملف هنا أو انقر للاختيار
+                        {t("اسحب الملف هنا أو انقر للاختيار", "Glissez le fichier ici ou cliquez pour le sélectionner")}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         PDF, DOC, DOCX
@@ -530,10 +522,10 @@ const LegislationForm: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 disabled:opacity-50"
+                className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 disabled:opacity-50 inline-flex items-center gap-2"
               >
-                <FontAwesomeIcon icon={faSave} className="ml-2" />
-                {isLoading ? "جاري الحفظ..." : "حفظ البيانات"}
+                <FontAwesomeIcon icon={faSave} />
+                {isLoading ? t("جاري الحفظ...", "Enregistrement…") : t("حفظ البيانات", "Enregistrer")}
               </button>
             </div>
           </div>

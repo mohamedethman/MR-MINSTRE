@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { getLegislations } from "../../services/api";
 import type { Legislation as LegislationType } from "../../types/types";
+import { useT } from "../../i18n";
+import PageHeader from "../../components/PageHeader";
+import { downloadMedia, openMedia } from "../../utils/content";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -9,6 +12,7 @@ const Legislation: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const { t, pair, isArabic, dir, formatDate } = useT();
 
   useEffect(() => {
     fetchLegislations();
@@ -27,23 +31,11 @@ const Legislation: React.FC = () => {
   };
 
   const handleDownload = (fileData: string, fileName: string) => {
-    if (!fileData) return;
-
-    const link = document.createElement("a");
-    link.href = `data:application/pdf;base64,${fileData}`;
-    link.download = fileName;
-    link.click();
+    downloadMedia(fileData, fileName, "application/pdf");
   };
 
   const handleView = (fileData: string) => {
-    if (!fileData) return;
-
-    const pdfWindow = window.open();
-    if (pdfWindow) {
-      pdfWindow.document.write(`
-        <iframe width="100%" height="100%" src="data:application/pdf;base64,${fileData}"></iframe>
-      `);
-    }
+    openMedia(fileData, "application/pdf");
   };
 
   // البحث في التشريعات مع التصفية
@@ -69,23 +61,21 @@ const Legislation: React.FC = () => {
   const totalPages = Math.ceil(filteredLegislations.length / ITEMS_PER_PAGE);
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-mauritania-green-dark to-mauritania-green text-white py-20 text-center">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">التشريعات والقوانين</h1>
-          <p className="text-xl">
-            النصوص القانونية والتشريعات المنظمة للقطاع العقاري
-          </p>
-        </div>
-      </section>
+    <div className="min-h-screen" dir={dir}>
+      <PageHeader
+        title={t("التشريعات والقوانين", "Législation et réglementation")}
+        subtitle={t(
+          "النصوص القانونية والتشريعات المنظمة للقطاع العقاري",
+          "Les textes juridiques et réglementaires régissant le secteur foncier"
+        )}
+      />
 
       {/* Legislation Section */}
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Search Box */}
         <div className="mb-8">
           <div className="relative max-w-2xl mx-auto">
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+            <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
               <svg
                 className="w-5 h-5 text-gray-400"
                 fill="none"
@@ -102,8 +92,9 @@ const Legislation: React.FC = () => {
             </div>
             <input
               type="text"
-              className="w-full pr-10 pl-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mauritania-green focus:border-transparent"
-              placeholder="ابحث في التشريعات..."
+              className="w-full ps-10 pe-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mauritania-green focus:border-transparent"
+              placeholder={t("ابحث في التشريعات...", "Rechercher dans la législation…")}
+              aria-label={t("ابحث في التشريعات", "Rechercher dans la législation")}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -116,7 +107,7 @@ const Legislation: React.FC = () => {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-mauritania-green"></div>
-            <p className="mt-2 text-gray-600">جاري تحميل التشريعات...</p>
+            <p className="mt-2 text-gray-600">{t("جاري تحميل التشريعات...", "Chargement des textes législatifs…")}</p>
           </div>
         ) : (
           <>
@@ -129,72 +120,79 @@ const Legislation: React.FC = () => {
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="text-xl font-bold text-mauritania-green-dark mb-2">
-                        {law.titrearabe || "بدون عنوان عربي"}
+                        {(isArabic
+                          ? law.titrearabe || law.titrefrancais
+                          : law.titrefrancais || law.titrearabe) ||
+                          t("بدون عنوان", "Sans titre")}
                       </h3>
-                      {law.titrefrancais && (
-                        <p className="text-gray-600 mb-2">
-                          {law.titrefrancais}
+                      {law.titrearabe && law.titrefrancais && (
+                        <p
+                          className="text-gray-600 mb-2"
+                          dir={isArabic ? "ltr" : "rtl"}
+                        >
+                          {isArabic ? law.titrefrancais : law.titrearabe}
                         </p>
                       )}
                       <div className="text-sm text-gray-500">
                         {law.datesortie
-                          ? new Date(law.datesortie).toLocaleDateString("ar-MA")
-                          : "غير محدد التاريخ"}
+                          ? formatDate(law.datesortie)
+                          : t("غير محدد التاريخ", "Date non précisée")}
                       </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2">
-                      {law.fichierarabe && (
-                        <div className="flex flex-col items-center">
+                      {pair(
+                      law.fichierarabe && (
+                        <div key="ar" className="flex flex-col items-center">
                           <button
                             onClick={() => handleView(law.fichierarabe!)}
                             className="bg-mauritania-green text-white py-2 px-4 rounded-md hover:bg-mauritania-green-dark transition duration-300 mb-2 sm:mb-0"
-                            title="معاينة الملف العربي"
+                            title={t("معاينة الملف العربي", "Consulter la version arabe")}
                           >
-                            معاينة عربي
+                            {t("معاينة عربي", "Consulter (arabe)")}
                           </button>
                           <button
                             onClick={() =>
                               handleDownload(
                                 law.fichierarabe!,
-                                `تشريع-عربي-${law.id}.pdf`
+                                `${t("تشريع-عربي", "legislation-arabe")}-${law.id}.pdf`
                               )
                             }
                             className="text-mauritania-green hover:text-mauritania-green-dark text-sm"
-                            title="تحميل الملف العربي"
+                            title={t("تحميل الملف العربي", "Télécharger la version arabe")}
                           >
-                            تحميل
+                            {t("تحميل", "Télécharger")}
                           </button>
                         </div>
-                      )}
-
-                      {law.fichierfrancais && (
-                        <div className="flex flex-col items-center">
+                      ),
+                      law.fichierfrancais && (
+                        <div key="fr" className="flex flex-col items-center">
                           <button
                             onClick={() => handleView(law.fichierfrancais!)}
                             className="bg-mauritania-green text-white py-2 px-4 rounded-md hover:bg-mauritania-green-dark transition duration-300 mb-2 sm:mb-0"
-                            title="معاينة الملف الفرنسي"
+                            title={t("معاينة الملف الفرنسي", "Consulter la version française")}
                           >
-                            معاينة فرنسي
+                            {t("معاينة فرنسي", "Consulter (français)")}
                           </button>
                           <button
                             onClick={() =>
                               handleDownload(
                                 law.fichierfrancais!,
-                                `تشريع-فرنسي-${law.id}.pdf`
+                                `${t("تشريع-فرنسي", "legislation-francais")}-${law.id}.pdf`
                               )
                             }
                             className="text-mauritania-green hover:text-mauritania-green-dark text-sm"
-                            title="تحميل الملف الفرنسي"
+                            title={t("تحميل الملف الفرنسي", "Télécharger la version française")}
                           >
-                            تحميل
+                            {t("تحميل", "Télécharger")}
                           </button>
                         </div>
+                      )
                       )}
 
                       {!law.fichierarabe && !law.fichierfrancais && (
                         <span className="text-gray-500 text-sm">
-                          لا يوجد ملف مرفق
+                          {t("لا يوجد ملف مرفق", "Aucun fichier joint")}
                         </span>
                       )}
                     </div>
@@ -206,7 +204,7 @@ const Legislation: React.FC = () => {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center mt-8">
-                <div className="flex space-x-2">
+                <nav className="flex gap-2" aria-label={t("ترقيم الصفحات", "Pagination")}>
                   <button
                     onClick={() =>
                       setCurrentPage((prev) => Math.max(prev - 1, 1))
@@ -214,7 +212,7 @@ const Legislation: React.FC = () => {
                     disabled={currentPage === 1}
                     className="px-4 py-2 border rounded-md disabled:opacity-50"
                   >
-                    السابق
+                    {t("السابق", "Précédent")}
                   </button>
 
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
@@ -240,9 +238,9 @@ const Legislation: React.FC = () => {
                     disabled={currentPage === totalPages}
                     className="px-4 py-2 border rounded-md disabled:opacity-50"
                   >
-                    التالي
+                    {t("التالي", "Suivant")}
                   </button>
-                </div>
+                </nav>
               </div>
             )}
           </>

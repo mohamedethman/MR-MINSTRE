@@ -3,6 +3,8 @@ import { getSliders } from "../services/api";
 import { Slider as SliderType } from "../types/types";
 import { useLanguage } from "../context/LanguageContext";
 import { getTranslation } from "../utils/translations";
+import { mediaUrl } from "../utils/content";
+import RichText from "./RichText";
 
 const Slider: React.FC = () => {
   const [sliders, setSliders] = useState<SliderType[]>([]);
@@ -87,11 +89,7 @@ const Slider: React.FC = () => {
               className="absolute inset-0 bg-cover bg-center"
               style={{
                 backgroundImage: `url(${
-                  typeof slider.image === "string"
-                    ? slider.image.startsWith("data:")
-                      ? slider.image
-                      : `data:image/jpeg;base64,${slider.image}`
-                    : "https://via.placeholder.com/1200x600"
+                  mediaUrl(typeof slider.image === "string" ? slider.image : null) || ""
                 })`,
               }}
             >
@@ -107,9 +105,11 @@ const Slider: React.FC = () => {
                 <h2 className="text-4xl font-bold mb-4">
                   {language === "ar" ? slider.titrearabe : slider.titrefrancais}
                 </h2>
-                <p className="text-xl mb-6 leading-relaxed">
-                  {language === "ar" ? slider.textarabe : slider.textfrancais}
-                </p>
+                <RichText
+                  html={language === "ar" ? slider.textarabe : slider.textfrancais}
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                  className="mb-6 !text-xl !text-white [&_*]:!text-white"
+                />
 
                 {slider.buttons?.map((btn, i) => (
                   <a

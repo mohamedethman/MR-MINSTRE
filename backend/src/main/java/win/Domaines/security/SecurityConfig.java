@@ -85,7 +85,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Auth libre
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/assets/**").permitAll()
+                        .requestMatchers("/assets/**", "/api/assets/**").permitAll()
                         // The public contact form can submit messages without an admin token.
                         .requestMatchers(HttpMethod.POST, "/api/messages").permitAll()
 

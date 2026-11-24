@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { MINISTRY_NAME } from "../utils/site";
 
 type Language = "ar" | "fr";
 
@@ -24,6 +25,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("language", language);
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = language;
+    document.title = MINISTRY_NAME[language];
   }, [language]);
 
   const toggleLanguage = () => {

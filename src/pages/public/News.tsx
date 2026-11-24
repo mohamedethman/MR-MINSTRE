@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getNews } from "../../services/api";
 import type { Actualite } from "../../types/types";
+import { useT } from "../../i18n";
+import PageHeader from "../../components/PageHeader";
+import { mediaUrl, pickLang, stripHtml, truncate } from "../../utils/content";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarAlt,
@@ -14,6 +17,10 @@ const News: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const { t, isArabic, dir, formatDate } = useT();
+  // Arrows pointing "forward" / "backward" in the reading direction
+  const forwardArrowClass = isArabic ? "rotate-180" : "";
+  const backwardArrowClass = isArabic ? "" : "rotate-180";
 
   useEffect(() => {
     fetchNews();
@@ -23,7 +30,11 @@ const News: React.FC = () => {
     try {
       setLoading(true);
       const response = await getNews();
-      setNewsItems(response.data);
+      setNewsItems(
+        Array.isArray(response.data)
+          ? [...response.data].sort((a: Actualite, b: Actualite) => (b.datepublication || "").localeCompare(a.datepublication || ""))
+          : []
+      );
     } catch (error) {
       console.error("Error fetching news:", error);
     } finally {
@@ -31,18 +42,6 @@ const News: React.FC = () => {
     }
   };
 
-  // تنظيف النص من الوسوم HTML
-  const cleanHtmlTags = (text: string) => {
-    if (!text) return "";
-    return text
-      .replace(/<p><p>/g, "")
-      .replace(/<p>/g, "")
-      .replace(/<\/p>/g, "\n")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/&nbsp;/g, " ")
-      .replace(/<[^>]*>/g, "")
-      .trim();
-  };
 
   // حساب عدد الصفحات
   const totalPages = Math.ceil(newsItems.length / itemsPerPage);
@@ -59,33 +58,26 @@ const News: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-mauritania-green-dark to-mauritania-green text-white py-20 text-center">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center mb-4">
-            <FontAwesomeIcon
-              icon={faNewspaper}
-              className="text-white text-4xl mr-3"
-            />
-            <h1 className="text-4xl font-bold">أخبار الوزارة</h1>
-          </div>
-          <p className="text-xl">
-            آخر الأخبار والتطورات في وزارة العقارات وأملاك الدولة
-          </p>
-        </div>
-      </section>
+    <div className="min-h-screen" dir={dir}>
+      <PageHeader
+        icon={faNewspaper}
+        title={t("أخبار الوزارة", "Actualités du ministère")}
+        subtitle={t(
+          "آخر الأخبار والتطورات في وزارة العقارات وأملاك الدولة",
+          "Les dernières actualités et évolutions du ministère"
+        )}
+      />
 
       {/* News Section */}
       <div className="container mx-auto px-4 py-12">
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-mauritania-green"></div>
-            <p className="mt-2 text-gray-600">جاري تحميل الأخبار...</p>
+            <p className="mt-2 text-gray-600">{t("جاري تحميل الأخبار...", "Chargement des actualités…")}</p>
           </div>
         ) : currentNews.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow-md">
-            <p className="text-gray-600">لا توجد أخبار متاحة</p>
+            <p className="text-gray-600">{t("لا توجد أخبار متاحة", "Aucune actualité disponible")}</p>
           </div>
         ) : (
           <>
@@ -96,54 +88,37 @@ const News: React.FC = () => {
                   className="bg-white rounded-lg overflow-hidden shadow-custom hover:shadow-xl transition-all duration-300 hover:-translate-y-2 flex flex-col h-full"
                 >
                   {/* Image container with fixed aspect ratio */}
-                  <div className="relative h-0 pb-[56.25%] overflow-hidden">
+                  {mediaUrl(news.image) && (
+                  <Link to={`/news/${news.id}`} className="relative block h-0 pb-[56.25%] overflow-hidden" aria-label={pickLang(isArabic, news.titrearabe, news.titrefrancais)}>
                     <img
-                      src={
-                        news.image?.startsWith("data:")
-                          ? news.image
-                          : news.image
-                          ? `data:image/jpeg;base64,${news.image}`
-                          : "https://images.unsplash.com/photo-1581093450020-7c01c5c81a2b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                      }
-                      alt={news.titrearabe || news.titrefrancais}
+                      src={mediaUrl(news.image) || undefined}
+                      alt={pickLang(isArabic, news.titrearabe, news.titrefrancais)}
                       className="absolute inset-0 w-full h-full object-cover transition duration-700 hover:scale-110"
                     />
-                    <div className="absolute top-4 left-4 bg-mauritania-gold text-mauritania-green-dark font-semibold py-1 px-3 rounded-full text-sm">
-                      خبر
+                    <div className="absolute top-4 start-4 bg-mauritania-gold text-mauritania-green-dark font-semibold py-1 px-3 rounded-full text-sm">
+                      {t("خبر", "Actualité")}
                     </div>
-                  </div>
+                  </Link>
+                  )}
                   <div className="p-6 flex flex-col flex-grow">
-                    <div className="flex items-center text-sm text-mauritania-gold mb-3">
-                      <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                    <div className="flex items-center gap-2 text-sm text-mauritania-gold mb-3">
+                      <FontAwesomeIcon icon={faCalendarAlt} />
                       {news.datepublication
-                        ? new Date(news.datepublication).toLocaleDateString(
-                            "ar-MA",
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            }
-                          )
-                        : "غير محدد التاريخ"}
+                        ? formatDate(news.datepublication)
+                        : t("غير محدد التاريخ", "Date non précisée")}
                     </div>
                     <h3 className="text-xl font-bold text-mauritania-green-dark mb-4 line-clamp-2">
-                      {news.titrearabe || news.titrefrancais}
+                      {pickLang(isArabic, news.titrearabe, news.titrefrancais)}
                     </h3>
-                    <div className="text-gray-600 mb-6 whitespace-pre-line line-clamp-3 flex-grow">
-                      {cleanHtmlTags(
-                        news.textarabe || news.textfrancais || ""
-                      ).substring(0, 120)}
-                      {(news.textarabe && news.textarabe.length > 120) ||
-                      (news.textfrancais && news.textfrancais.length > 120)
-                        ? "..."
-                        : ""}
-                    </div>
+                    <p className="text-gray-600 mb-6 line-clamp-3 flex-grow">
+                      {truncate(stripHtml(isArabic ? news.textarabe || news.textfrancais : news.textfrancais || news.textarabe), 160)}
+                    </p>
                     <Link
                       to={`/news/${news.id}`}
-                      className="inline-flex items-center text-mauritania-green-dark font-semibold hover:text-mauritania-green transition duration-300 mt-auto"
+                      className="inline-flex items-center gap-2 text-mauritania-green-dark font-semibold hover:text-mauritania-green transition duration-300 mt-auto"
                     >
-                      قراءة المزيد
-                      <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
+                      {t("قراءة المزيد", "Lire la suite")}
+                      <FontAwesomeIcon icon={faArrowRight} className={forwardArrowClass} />
                     </Link>
                   </div>
                 </div>
@@ -153,14 +128,14 @@ const News: React.FC = () => {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center mt-12">
-                <nav className="flex items-center space-x-2">
+                <nav className="flex items-center gap-2" aria-label={t("ترقيم الصفحات", "Pagination")}>
                   {currentPage > 1 && (
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
-                      className="px-4 py-2 rounded-md bg-mauritania-green text-white hover:bg-mauritania-green-dark transition duration-300 flex items-center"
+                      className="px-4 py-2 rounded-md bg-mauritania-green text-white hover:bg-mauritania-green-dark transition duration-300 flex items-center gap-2"
                     >
-                      <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
-                      السابق
+                      <FontAwesomeIcon icon={faArrowRight} className={backwardArrowClass} />
+                      {t("السابق", "Précédent")}
                     </button>
                   )}
 
@@ -183,12 +158,12 @@ const News: React.FC = () => {
                   {currentPage < totalPages && (
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
-                      className="px-4 py-2 rounded-md bg-mauritania-green text-white hover:bg-mauritania-green-dark transition duration-300 flex items-center"
+                      className="px-4 py-2 rounded-md bg-mauritania-green text-white hover:bg-mauritania-green-dark transition duration-300 flex items-center gap-2"
                     >
-                      التالي
+                      {t("التالي", "Suivant")}
                       <FontAwesomeIcon
                         icon={faArrowRight}
-                        className="mr-2 transform rotate-180"
+                        className={forwardArrowClass}
                       />
                     </button>
                   )}
