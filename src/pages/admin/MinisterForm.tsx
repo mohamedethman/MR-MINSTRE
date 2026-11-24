@@ -13,6 +13,7 @@ import {
 import { Minister } from "../../types/types";
 import { toast } from "react-toastify";
 import AdminLayout from "./AdminLayout";
+import { useSingleRecordGuard } from "../../hooks/useSingleRecordGuard";
 import { useT } from "../../i18n";
 import { mediaUrl } from "../../utils/content";
 
@@ -36,6 +37,8 @@ const MinisterForm: React.FC = () => {
   const { t } = useT();
 
   const [isLoading, setIsLoading] = useState(false);
+  // Only one minister record is shown on the site: "new" redirects to the existing one.
+  const checkingSingle = useSingleRecordGuard(!isEditMode, "/aproposministere", (existingId) => `/admin/ministers/edit/${existingId}`);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   // Image exactly as stored by the backend (base64 or file name), re-sent unchanged on save.
   const [storedImage, setStoredImage] = useState<string | null>(null);
@@ -170,6 +173,14 @@ const MinisterForm: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  if (checkingSingle) {
+    return (
+      <AdminLayout>
+        <p className="py-12 text-center text-gray-600">{t("جاري التحميل...", "Chargement…")}</p>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>

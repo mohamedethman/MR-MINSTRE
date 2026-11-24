@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faEdit, faExternalLinkAlt, faPlus, faSearch, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faEdit, faExternalLinkAlt, faSearch, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 import api from "../../../services/api";
 import AdminLayout from "../AdminLayout";
 import CellText from "../../../components/CellText";
+import AddButton from "../../../components/AddButton";
 import { useT } from "../../../i18n";
 import { useConfirm } from "../../../components/ConfirmDialog";
 import { mediaUrl, stripHtml } from "../../../utils/content";
@@ -139,13 +140,11 @@ const CrudList: React.FC = () => {
     <AdminLayout>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold text-mauritania-green-dark">{label(section.label)}</h1>
-        <Link
+        <AddButton
           to={`/admin/${section.key}/new`}
-          className="inline-flex items-center gap-2 rounded bg-mauritania-green px-4 py-2 text-white transition hover:bg-mauritania-green-dark"
-        >
-          <FontAwesomeIcon icon={faPlus} />
-          {t("إضافة", "Ajouter")}
-        </Link>
+          label={t("إضافة", "Ajouter")}
+          limitReached={Boolean(section.singleRecord) && !loading && rows.length > 0}
+        />
       </div>
 
       <div className="mb-6 rounded-lg bg-white p-4 shadow-md">

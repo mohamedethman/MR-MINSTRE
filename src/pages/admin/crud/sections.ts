@@ -123,6 +123,7 @@ export const CRUD_SECTIONS: CrudSection[] = [
     fields: [...titles, ...richTexts],
     columns: titleColumns,
     searchFields: ["titrearabe", "titrefrancais"],
+    singleRecord: true, // the minister page shows only the first record
   },
   {
     key: "taches",

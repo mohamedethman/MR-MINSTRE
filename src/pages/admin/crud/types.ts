@@ -55,4 +55,6 @@ export interface CrudSection {
   columns: ColumnDef[];
   /** Fields searched by the list's search box. */
   searchFields: string[];
+  /** Only one record is allowed (the site shows the first one): "Ajouter" is disabled once it exists. */
+  singleRecord?: boolean;
 }

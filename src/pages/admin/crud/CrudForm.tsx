@@ -10,6 +10,7 @@ import AdminLayout from "../AdminLayout";
 import { useT } from "../../../i18n";
 import { mediaKind, mediaUrl, openMedia } from "../../../utils/content";
 import { findCrudSection } from "./sections";
+import { useSingleRecordGuard } from "../../../hooks/useSingleRecordGuard";
 import { FieldDef } from "./types";
 
 type Values = Record<string, any>;
@@ -53,6 +54,12 @@ const CrudForm: React.FC = () => {
   const [options, setOptions] = useState<Record<string, Option[]>>({});
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
+  // Single-record sections: "new" redirects to the existing record's edit form.
+  const checkingSingle = useSingleRecordGuard(
+    Boolean(section?.singleRecord) && !isEdit,
+    section?.endpoint ?? "",
+    (existingId) => `/admin/${section?.key}/edit/${existingId}`
+  );
 
   const label = (l: { ar: string; fr: string }) => (isArabic ? l.ar : l.fr);
 
@@ -309,7 +316,7 @@ const CrudForm: React.FC = () => {
         </Link>
       </div>
 
-      {loading ? (
+      {loading || checkingSingle ? (
         <p className="py-12 text-center text-gray-600">{t("جاري التحميل...", "Chargement…")}</p>
       ) : (
         <form onSubmit={handleSubmit} className="rounded-lg bg-white p-6 shadow-md">

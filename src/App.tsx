@@ -23,6 +23,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { ConfirmProvider } from "./components/ConfirmDialog";
+import { useT } from "./i18n";
 import NewsDetail from "./pages/public/NewsDetail";
 import MinisterPage from "./pages/public/MinisterPage";
 import AnnouncementDetail from "./pages/public/AnnouncementDetail";
@@ -80,6 +81,24 @@ const SiteHeader: React.FC = () => {
 const PublicChrome: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { pathname } = useLocation();
   return isAdminPath(pathname) ? null : children;
+};
+
+/** Toasts follow the interface language: right-to-left in Arabic, left-to-right in French. */
+const LocalizedToasts: React.FC = () => {
+  const { isArabic } = useT();
+  return (
+    <ToastContainer
+      position={isArabic ? "top-left" : "top-right"}
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      rtl={isArabic}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+    />
+  );
 };
 
 const App: React.FC = () => {
@@ -217,17 +236,7 @@ const App: React.FC = () => {
             <PublicChrome>
               <Footer />
             </PublicChrome>
-            <ToastContainer
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={true}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-            />
+            <LocalizedToasts />
           </div>
         </Router>
       </AuthProvider>

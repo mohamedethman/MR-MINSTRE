@@ -14,6 +14,7 @@ import AdminLayout from "./AdminLayout";
 import { useT } from "../../i18n";
 import { useConfirm } from "../../components/ConfirmDialog";
 import CellText from "../../components/CellText";
+import AddButton from "../../components/AddButton";
 
 const Ministers: React.FC = () => {
   const { t, pair, isArabic } = useT();
@@ -64,6 +65,12 @@ const Ministers: React.FC = () => {
         <h1 className="text-3xl font-bold text-mauritania-green-dark mb-4 md:mb-0">
           {t("إدارة الوزارة", "Gestion du ministère")}
         </h1>
+        {/* The site shows only the first record, so a single one is allowed. */}
+        <AddButton
+          to="/admin/ministers/new"
+          label={t("إضافة", "Ajouter")}
+          limitReached={!loading && ministers.length > 0}
+        />
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
