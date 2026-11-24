@@ -38,13 +38,41 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "check:i18n": "node scripts/check-i18n.js",
+    "prebuild": "npm run check:i18n"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "no-restricted-globals": [
+        "error",
+        {
+          "name": "confirm",
+          "message": "Use useConfirm() from components/ConfirmDialog."
+        },
+        {
+          "name": "alert",
+          "message": "Use toast from react-toastify."
+        }
+      ],
+      "no-restricted-properties": [
+        "error",
+        {
+          "object": "window",
+          "property": "confirm",
+          "message": "Use useConfirm() from components/ConfirmDialog."
+        },
+        {
+          "object": "window",
+          "property": "alert",
+          "message": "Use toast from react-toastify."
+        }
+      ]
+    }
   },
   "browserslist": {
     "production": [

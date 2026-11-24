@@ -175,3 +175,90 @@ body {
 .shadow-custom {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
+/* ---------- Rich text (content written in the admin Quill editor) ---------- */
+.ql-editor.rich-text {
+  height: auto;
+  overflow: visible;
+  padding: 0;
+  white-space: normal;
+  cursor: auto;
+  font-size: 1rem;
+  line-height: 1.9;
+  color: #374151;
+  text-align: justify;
+}
+.ql-editor.rich-text-rtl { text-align: right; }
+.ql-editor.rich-text > * { cursor: auto; }
+.ql-editor.rich-text p,
+.ql-editor.rich-text ol,
+.ql-editor.rich-text ul,
+.ql-editor.rich-text blockquote,
+.ql-editor.rich-text pre { margin-bottom: 0.75rem; }
+.ql-editor.rich-text h1,
+.ql-editor.rich-text h2,
+.ql-editor.rich-text h3,
+.ql-editor.rich-text h4 {
+  color: #007a45;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 1.25rem 0 0.5rem;
+}
+.ql-editor.rich-text h1 { font-size: 1.6em; }
+.ql-editor.rich-text h2 { font-size: 1.4em; }
+.ql-editor.rich-text h3 { font-size: 1.2em; }
+.ql-editor.rich-text strong,
+.ql-editor.rich-text b { font-weight: 700; color: #1f2937; }
+.ql-editor.rich-text a { color: #007a45; text-decoration: underline; }
+.ql-editor.rich-text a:hover { color: #ce1f26; }
+.ql-editor.rich-text li::before { color: #007a45; font-weight: 700; }
+.ql-editor.rich-text blockquote {
+  border-inline-start: 4px solid #ffc72c;
+  padding-inline-start: 1rem;
+  color: #4b5563;
+  font-style: italic;
+}
+.ql-editor.rich-text img { max-width: 100%; height: auto; border-radius: 0.5rem; }
+.ql-editor.rich-text table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+.ql-editor.rich-text td,
+.ql-editor.rich-text th { border: 1px solid #e5e7eb; padding: 0.5rem; }
+/* Default (no explicit alignment) follows the reading direction. */
+.ql-editor.rich-text-rtl .ql-align-left { text-align: left; }
+.ql-editor.rich-text-rtl li:not(.ql-direction-rtl)::before { margin-left: 0.3em; margin-right: -1.5em; text-align: left; }
+.ql-editor.rich-text-rtl ol,
+.ql-editor.rich-text-rtl ul { padding-left: 0; padding-right: 1.5em; }
+.ql-editor.rich-text-rtl li:not(.ql-direction-rtl) { padding-left: 0; padding-right: 1.5em; }
+/* Compact variant used in previews (home page cards). */
+.ql-editor.rich-text.rich-text-sm { font-size: 0.875rem; line-height: 1.75; }
+
+/* ---------- Layout guard: never scroll the whole page sideways ---------- */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+/* Wide content (tables, code, embeds) scrolls inside its own box instead. */
+img,
+video,
+iframe {
+  max-width: 100%;
+}
+
+/* Arabic content in the admin rich-text editor */
+.quill-rtl .ql-editor {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Confirm dialog animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-["] { animation: none !important; }
+}

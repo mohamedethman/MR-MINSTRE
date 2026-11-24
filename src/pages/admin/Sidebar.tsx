@@ -1,79 +1,41 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faTachometerAlt,
-  faUserTie,
-  faNewspaper,
-  faBullhorn,
-  faGavel,
-  faUsers,
-  faChartLine,
-  faCarTunnel,
-  faInfoCircle,
-  faEnvelope,
-  faNavicon,
-  faImages,
-} from "@fortawesome/free-solid-svg-icons";
-import { faNode } from "@fortawesome/free-brands-svg-icons";
-import { faBook, faPhotoVideo } from "@fortawesome/free-solid-svg-icons";
+import { useT } from "../../i18n";
+import { ADMIN_SECTIONS, activeSectionPath } from "./adminSections";
 
 const Sidebar: React.FC = () => {
-  const location = useLocation();
-
-  const links = [
-    { to: "/admin/dashboard", label: "لوحة التحكم", icon: faTachometerAlt },
-    { to: "/admin/sliders", label: "السلايدر", icon: faImages },
-    { to: "/admin/ministers", label: "الوزارة", icon: faUserTie },
-    { to: "/admin/news", label: "الأخبار", icon: faNewspaper },
-    {
-      to: "/admin/news/categories",
-      label: "تصنبقيات الأخبار",
-      icon: faNavicon,
-    },
-    { to: "/admin/announcements", label: "الإعلانات", icon: faBullhorn },
-    { to: "/admin/legislations", label: "التشريعات", icon: faGavel },
-    {
-      to: "/admin/bibliotheque",
-      label: "المكتبة المتعددة الوسائط",
-      icon: faPhotoVideo,
-    },
-    {
-      to: "/admin/bibliotheque/categories",
-      label: "تصنيفات المكتبة",
-      icon: faBook,
-    },
-    { to: "/admin/information", label: "المعلومات العامة", icon: faInfoCircle }, // Add this
-    { to: "/admin/messages", label: "الرسائل", icon: faEnvelope }, // Add this
-    { to: "/admin/users", label: "المستخدمين", icon: faUsers },
-    { to: "/admin/statistics", label: "الإحصائيات", icon: faChartLine },
-  ];
+  const { pathname } = useLocation();
+  const { t, language } = useT();
+  const lang = language === "ar" ? "ar" : "fr";
+  const active = activeSectionPath(pathname);
 
   return (
-    <div className="w-64 min-h-screen bg-white shadow-md">
-      <div className="p-6 text-2xl font-bold text-mauritania-green-dark border-b">
-        لوحة الإدارة
+    <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-64 shrink-0 overflow-y-auto border-e border-gray-100 bg-white shadow-md">
+      <div className="border-b p-6 text-2xl font-bold text-mauritania-green-dark">
+        {t("لوحة الإدارة", "Administration")}
       </div>
       <nav className="p-4">
-        <ul className="space-y-2">
-          {links.map((link) => (
-            <li key={link.to}>
+        <ul className="space-y-1">
+          {ADMIN_SECTIONS.map((section) => (
+            <li key={section.to}>
               <Link
-                to={link.to}
-                className={`flex items-center px-4 py-2 rounded-md hover:bg-mauritania-green/10 ${
-                  location.pathname === link.to
-                    ? "bg-mauritania-green/20 text-mauritania-green-dark font-semibold"
+                to={section.to}
+                aria-current={active === section.to ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-md px-4 py-2.5 hover:bg-mauritania-green/10 ${
+                  active === section.to
+                    ? "bg-mauritania-green/20 font-semibold text-mauritania-green-dark"
                     : "text-gray-700"
                 }`}
               >
-                <FontAwesomeIcon icon={link.icon} className="ml-2" />
-                {link.label}
+                <FontAwesomeIcon icon={section.icon} fixedWidth />
+                {section.label[lang]}
               </Link>
             </li>
           ))}
         </ul>
       </nav>
-    </div>
+    </aside>
   );
 };
 

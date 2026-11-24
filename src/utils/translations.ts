@@ -10,7 +10,7 @@ export const translations = {
     loadingMinister: "جاري تحميل بيانات الوزير...",
     minister: "وزير العقارات",
     ministerWord: "كلمة الوزير",
-    ministerCV: "السبرة الذاتية للوزير",
+    ministerCV: "السيرة الذاتية للوزير",
     readMore: "قراءة المزيد",
     noMinisterData: "لا توجد بيانات للوزير",
     vision: "الرؤية",

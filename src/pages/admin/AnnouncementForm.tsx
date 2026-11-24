@@ -13,6 +13,7 @@ import {
 import { Announcement } from "../../types/types";
 import { toast } from "react-toastify";
 import AdminLayout from "./AdminLayout";
+import { useT } from "../../i18n";
 
 const quillModules = {
   toolbar: [
@@ -30,6 +31,7 @@ const AnnouncementForm: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const { t } = useT();
 
   const [isLoading, setIsLoading] = useState(false);
   const [arabicText, setArabicText] = useState("");
@@ -71,7 +73,7 @@ const AnnouncementForm: React.FC = () => {
           }
         } catch (error) {
           console.error("Error fetching announcement:", error);
-          toast.error("حدث خطأ أثناء جلب بيانات الإعلان");
+          toast.error(t("حدث خطأ أثناء جلب بيانات الإعلان", "Erreur lors du chargement de l'annonce"));
         } finally {
           setIsLoading(false);
         }
@@ -100,16 +102,16 @@ const AnnouncementForm: React.FC = () => {
 
       if (isEditMode) {
         await updateAnnouncement(parseInt(id!), payload);
-        toast.success("تم تحديث الإعلان بنجاح");
+        toast.success(t("تم تحديث الإعلان بنجاح", "Annonce mise à jour avec succès"));
       } else {
         await createAnnouncement(payload);
-        toast.success("تم إضافة الإعلان بنجاح");
+        toast.success(t("تم إضافة الإعلان بنجاح", "Annonce ajoutée avec succès"));
       }
 
       navigate("/admin/announcements");
     } catch (error) {
       console.error("Error saving announcement:", error);
-      toast.error("حدث خطأ أثناء حفظ البيانات");
+      toast.error(t("حدث خطأ أثناء حفظ البيانات", "Erreur lors de l'enregistrement des données"));
     } finally {
       setIsLoading(false);
     }
@@ -151,14 +153,14 @@ const AnnouncementForm: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-mauritania-green-dark">
-            {isEditMode ? "تعديل الإعلان" : "إضافة إعلان جديد"}
+            {isEditMode ? t("تعديل الإعلان", "Modifier l'annonce") : t("إضافة إعلان جديد", "Ajouter une annonce")}
           </h1>
           <button
             onClick={() => navigate("/admin/announcements")}
-            className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300"
+            className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300 inline-flex items-center gap-2"
           >
-            <FontAwesomeIcon icon={faArrowLeft} className="ml-2" />
-            رجوع
+            <FontAwesomeIcon icon={faArrowLeft} className="rtl:rotate-180" />
+            {t("رجوع", "Retour")}
           </button>
         </div>
 
@@ -171,13 +173,13 @@ const AnnouncementForm: React.FC = () => {
                   htmlFor="titrearabe"
                   className="block text-gray-700 mb-2"
                 >
-                  العنوان (عربي) *
+                  {t("العنوان (عربي)", "Titre en arabe")} *
                 </label>
                 <input
                   id="titrearabe"
                   dir="rtl"
                   type="text"
-                  {...register("titrearabe", { required: "هذا الحقل مطلوب" })}
+                  {...register("titrearabe", { required: t("هذا الحقل مطلوب", "Ce champ est obligatoire") })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.titrearabe ? "border-red-500" : "border-gray-300"
                   }`}
@@ -194,14 +196,14 @@ const AnnouncementForm: React.FC = () => {
                   htmlFor="titrefrancais"
                   className="block text-gray-700 mb-2"
                 >
-                  العنوان (فرنسي) *
+                  {t("العنوان (فرنسي)", "Titre en français")} *
                 </label>
                 <input
                   id="titrefrancais"
                   dir="ltr"
                   type="text"
                   {...register("titrefrancais", {
-                    required: "هذا الحقل مطلوب",
+                    required: t("هذا الحقل مطلوب", "Ce champ est obligatoire"),
                   })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.titrefrancais ? "border-red-500" : "border-gray-300"
@@ -220,13 +222,13 @@ const AnnouncementForm: React.FC = () => {
                 htmlFor="datepublication"
                 className="block text-gray-700 mb-2"
               >
-                تاريخ النشر *
+                {t("تاريخ النشر", "Date de publication")} *
               </label>
               <input
                 id="datepublication"
                 type="date"
                 {...register("datepublication", {
-                  required: "هذا الحقل مطلوب",
+                  required: t("هذا الحقل مطلوب", "Ce champ est obligatoire"),
                 })}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                   errors.datepublication ? "border-red-500" : "border-gray-300"
@@ -241,7 +243,7 @@ const AnnouncementForm: React.FC = () => {
 
             {/* Rich Text Editors */}
             <div className="mb-6">
-              <label className="block text-gray-700 mb-2">المحتوى (عربي)</label>
+              <label className="block text-gray-700 mb-2">{t("المحتوى (عربي)", "Contenu en arabe")}</label>
               <div dir="rtl" className="rtl-quill">
                 <ReactQuill
                   theme="snow"
@@ -255,7 +257,7 @@ const AnnouncementForm: React.FC = () => {
 
             <div className="mb-6">
               <label className="block text-gray-700 mb-2">
-                المحتوى (فرنسي)
+                {t("المحتوى (فرنسي)", "Contenu en français")}
               </label>
               <div dir="ltr" className="ltr-quill">
                 <ReactQuill
@@ -273,10 +275,10 @@ const AnnouncementForm: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300"
+                className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 inline-flex items-center gap-2 disabled:opacity-50"
               >
-                <FontAwesomeIcon icon={faSave} className="ml-2" />
-                {isLoading ? "جاري الحفظ..." : "حفظ البيانات"}
+                <FontAwesomeIcon icon={faSave} />
+                {isLoading ? t("جاري الحفظ...", "Enregistrement…") : t("حفظ البيانات", "Enregistrer")}
               </button>
             </div>
           </div>

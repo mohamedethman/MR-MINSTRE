@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import AdminLayout from "./AdminLayout";
+import { useT } from "../../i18n";
+import { useConfirm } from "../../components/ConfirmDialog";
 import {
   getActualitesCategories,
   createActualiteCategorie,
@@ -11,6 +13,8 @@ import {
 import { ActualiteCategorie } from "../../types/types";
 
 const CategorieForm: React.FC = () => {
+  const { t, pair } = useT();
+  const confirm = useConfirm();
   const [categories, setCategories] = useState<ActualiteCategorie[]>([]);
   const { register, handleSubmit, reset } = useForm<ActualiteCategorie>();
 
@@ -19,7 +23,7 @@ const CategorieForm: React.FC = () => {
       const response = await getActualitesCategories();
       setCategories(response.data);
     } catch (err) {
-      toast.error("خطأ في جلب التصنيفات");
+      toast.error(t("خطأ في جلب التصنيفات", "Erreur lors du chargement des catégories"));
     }
   };
 
@@ -31,15 +35,15 @@ const CategorieForm: React.FC = () => {
     try {
       if (data.id) {
         await updateActualiteCategorie(data.id, data);
-        toast.success("تم تحديث التصنيف");
+        toast.success(t("تم تحديث التصنيف", "Catégorie mise à jour"));
       } else {
         await createActualiteCategorie(data);
-        toast.success("تم إضافة التصنيف");
+        toast.success(t("تم إضافة التصنيف", "Catégorie ajoutée"));
       }
       reset({});
       fetchCategories();
     } catch (err) {
-      toast.error("خطأ في الحفظ");
+      toast.error(t("خطأ في الحفظ", "Erreur lors de l'enregistrement"));
     }
   };
 
@@ -49,36 +53,38 @@ const CategorieForm: React.FC = () => {
 
   const handleDelete = async (id?: number) => {
     if (!id) return;
-    if (!window.confirm("هل أنت متأكد من الحذف؟")) return;
+    if (!await confirm(t("هل أنت متأكد من الحذف؟", "Êtes-vous sûr de vouloir supprimer cet élément ?"))) return;
     try {
       await deleteActualiteCategorie(id);
-      toast.success("تم حذف التصنيف");
+      toast.success(t("تم حذف التصنيف", "Catégorie supprimée"));
       fetchCategories();
     } catch (err) {
-      toast.error("خطأ في الحذف");
+      toast.error(t("خطأ في الحذف", "Erreur lors de la suppression"));
     }
   };
 
   return (
     <AdminLayout>
-      <h1 className="text-3xl font-bold mb-6">إدارة التصنيفات</h1>
+      <h1 className="text-3xl font-bold mb-6">{t("إدارة التصنيفات", "Gestion des catégories")}</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <input
             type="text"
-            placeholder="الاسم بالعربي"
+            dir="rtl"
+            placeholder={t("الاسم بالعربي", "Nom en arabe")}
             {...register("nomarabe", { required: true })}
             className="w-full px-3 py-2 border rounded-md"
           />
           <input
             type="text"
-            placeholder="Nom en Français"
+            dir="ltr"
+            placeholder={t("الاسم بالفرنسي", "Nom en français")}
             {...register("nomfrancais", { required: true })}
             className="w-full px-3 py-2 border rounded-md"
           />
         </div>
         <button className="bg-mauritania-green text-white py-2 px-4 rounded-md">
-          حفظ
+          {t("حفظ", "Enregistrer")}
         </button>
       </form>
 
@@ -86,29 +92,33 @@ const CategorieForm: React.FC = () => {
         <thead>
           <tr className="bg-gray-200">
             <th className="border px-2 py-1">#</th>
-            <th className="border px-2 py-1">العربي</th>
-            <th className="border px-2 py-1">فرنسي</th>
-            <th className="border px-2 py-1">إجراءات</th>
+            {pair(
+              <th key="ar" className="border px-2 py-1">{t("العربي", "Arabe")}</th>,
+              <th key="fr" className="border px-2 py-1">{t("فرنسي", "Français")}</th>
+            )}
+            <th className="border px-2 py-1">{t("إجراءات", "Actions")}</th>
           </tr>
         </thead>
         <tbody>
           {categories.map((cat) => (
             <tr key={cat.id}>
               <td className="border px-2 py-1">{cat.id}</td>
-              <td className="border px-2 py-1">{cat.nomarabe}</td>
-              <td className="border px-2 py-1">{cat.nomfrancais}</td>
+              {pair(
+                <td key="ar" className="border px-2 py-1" dir="rtl">{cat.nomarabe}</td>,
+                <td key="fr" className="border px-2 py-1" dir="ltr">{cat.nomfrancais}</td>
+              )}
               <td className="border px-2 py-1">
                 <button
                   onClick={() => handleEdit(cat)}
-                  className="bg-blue-500 text-white px-2 py-1 rounded mr-2"
+                  className="bg-blue-500 text-white px-2 py-1 rounded me-2"
                 >
-                  تعديل
+                  {t("تعديل", "Modifier")}
                 </button>
                 <button
                   onClick={() => handleDelete(cat.id)}
                   className="bg-red-500 text-white px-2 py-1 rounded"
                 >
-                  حذف
+                  {t("حذف", "Supprimer")}
                 </button>
               </td>
             </tr>

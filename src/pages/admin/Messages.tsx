@@ -14,8 +14,12 @@ import { getMessages, deleteMessage, updateMessage } from "../../services/api";
 
 import { Message } from "../../types/types";
 import AdminLayout from "./AdminLayout";
+import { useT } from "../../i18n";
+import { useConfirm } from "../../components/ConfirmDialog";
 
 const MessagesAdmin: React.FC = () => {
+  const { t, formatDate } = useT();
+  const confirm = useConfirm();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -32,7 +36,7 @@ const MessagesAdmin: React.FC = () => {
       setMessages(response.data);
     } catch (error) {
       console.error("Error fetching messages:", error);
-      toast.error("حدث خطأ أثناء جلب الرسائل");
+      toast.error(t("حدث خطأ أثناء جلب الرسائل", "Erreur lors du chargement des messages"));
     } finally {
       setIsLoading(false);
     }
@@ -55,17 +59,17 @@ const MessagesAdmin: React.FC = () => {
   };
 
   const handleDeleteMessage = async (id: number) => {
-    if (window.confirm("هل أنت متأكد من حذف هذه الرسالة؟")) {
+    if (await confirm(t("هل أنت متأكد من حذف هذه الرسالة؟", "Voulez-vous vraiment supprimer ce message ?"))) {
       try {
         await deleteMessage(id);
         setMessages((prev) => prev.filter((m) => m.id !== id));
         if (selectedMessage?.id === id) {
           setSelectedMessage(null);
         }
-        toast.success("تم حذف الرسالة بنجاح");
+        toast.success(t("تم حذف الرسالة بنجاح", "Message supprimé avec succès"));
       } catch (error) {
         console.error("Error deleting message:", error);
-        toast.error("حدث خطأ أثناء حذف الرسالة");
+        toast.error(t("حدث خطأ أثناء حذف الرسالة", "Erreur lors de la suppression du message"));
       }
     }
   };
@@ -85,7 +89,11 @@ const MessagesAdmin: React.FC = () => {
     return (
       <AdminLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mauritania-green"></div>
+          <div
+            className="animate-spin rounded-full h-12 w-12 border-b-2 border-mauritania-green"
+            role="status"
+            aria-label={t("جاري التحميل...", "Chargement…")}
+          ></div>
         </div>
       </AdminLayout>
     );
@@ -95,7 +103,7 @@ const MessagesAdmin: React.FC = () => {
     <AdminLayout>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-mauritania-green-dark">
-          إدارة الرسائل
+          {t("إدارة الرسائل", "Gestion des messages")}
         </h1>
       </div>
 
@@ -107,21 +115,21 @@ const MessagesAdmin: React.FC = () => {
             <div className="mb-4 relative">
               <input
                 type="text"
-                placeholder="بحث في الرسائل..."
+                placeholder={t("بحث في الرسائل...", "Rechercher dans les messages…")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green"
+                className="w-full ps-3 pe-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green"
               />
               <FontAwesomeIcon
                 icon={faSearch}
-                className="absolute left-3 top-3 text-gray-400"
+                className="absolute end-3 top-3 text-gray-400"
               />
             </div>
 
             {/* Messages */}
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {filteredMessages.length === 0 ? (
-                <p className="text-center text-gray-500 py-4">لا توجد رسائل</p>
+                <p className="text-center text-gray-500 py-4">{t("لا توجد رسائل", "Aucun message")}</p>
               ) : (
                 filteredMessages.map((message) => (
                   <div
@@ -139,21 +147,24 @@ const MessagesAdmin: React.FC = () => {
                       <div className="flex items-center">
                         <FontAwesomeIcon
                           icon={message.lu ? faEnvelopeOpen : faEnvelope}
+                          title={message.lu ? t("مقروءة", "Lu") : t("غير مقروءة", "Non lu")}
                           className={
                             message.lu
                               ? "text-gray-400"
                               : "text-mauritania-green"
                           }
                         />
-                        <span className="ml-2 font-medium truncate">
+                        <span className="ms-2 font-medium truncate">
                           {message.nom}
                         </span>
                       </div>
                       <span className="text-sm text-gray-500">
                         {message.datecreation
-                          ? new Date(message.datecreation).toLocaleDateString(
-                              "ar-EG"
-                            )
+                          ? formatDate(message.datecreation, {
+                              year: "numeric",
+                              month: "numeric",
+                              day: "numeric",
+                            })
                           : ""}
                       </span>
                     </div>
@@ -177,28 +188,34 @@ const MessagesAdmin: React.FC = () => {
                     {selectedMessage.objet}
                   </h2>
                   <p className="text-gray-600">
-                    من: {selectedMessage.nom} ({selectedMessage.email})
+                    {t("من:", "De :")} {selectedMessage.nom} ({selectedMessage.email})
                   </p>
                   <p className="text-sm text-gray-500">
                     {selectedMessage.datecreation
-                      ? new Date(selectedMessage.datecreation).toLocaleString(
-                          "ar-EG"
-                        )
+                      ? formatDate(selectedMessage.datecreation, {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                       : ""}
                   </p>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex gap-2">
                   <button
                     onClick={() => handleReply(selectedMessage.email)}
                     className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-                    title="رد"
+                    title={t("رد", "Répondre")}
+                    aria-label={t("رد", "Répondre")}
                   >
                     <FontAwesomeIcon icon={faReply} />
                   </button>
                   <button
                     onClick={() => handleDeleteMessage(selectedMessage.id!)}
                     className="bg-red-500 text-white p-2 rounded hover:bg-red-600"
-                    title="حذف"
+                    title={t("حذف", "Supprimer")}
+                    aria-label={t("حذف", "Supprimer")}
                   >
                     <FontAwesomeIcon icon={faTrash} />
                   </button>
@@ -206,7 +223,7 @@ const MessagesAdmin: React.FC = () => {
               </div>
 
               <div className="border-t pt-4">
-                <h3 className="font-bold text-gray-700 mb-2">محتوى الرسالة:</h3>
+                <h3 className="font-bold text-gray-700 mb-2">{t("محتوى الرسالة:", "Contenu du message :")}</h3>
                 <p className="text-gray-800 whitespace-pre-wrap">
                   {selectedMessage.message}
                 </p>
@@ -218,7 +235,7 @@ const MessagesAdmin: React.FC = () => {
                 icon={faEnvelope}
                 className="text-4xl text-gray-300 mb-4"
               />
-              <p className="text-gray-500">اختر رسالة لعرض محتواها</p>
+              <p className="text-gray-500">{t("اختر رسالة لعرض محتواها", "Sélectionnez un message pour afficher son contenu")}</p>
             </div>
           )}
         </div>

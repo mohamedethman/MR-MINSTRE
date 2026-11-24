@@ -1,5 +1,6 @@
 // api.ts
 import axios from "axios";
+import { cachedFetch, invalidateCache } from "./cache";
 
 let authToken: string | null = null;
 
@@ -9,7 +10,9 @@ export const setAuthToken = (token: string) => {
 };
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "https://domaines.gov.mr/api",
+  // Production builds call the API on the same site ("/api", proxied to the backend);
+  // local dev sets REACT_APP_API_URL in .env.development.
+  baseURL: process.env.REACT_APP_API_URL || "/api",
 });
 
 // Request interceptor
@@ -23,22 +26,46 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Called when the backend says the session is no longer valid (set by AuthContext).
+let onUnauthorized: (() => void) | null = null;
+export const setUnauthorizedHandler = (handler: (() => void) | null) => {
+  onUnauthorized = handler;
+};
+
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // A successful write makes cached reads of that endpoint stale (e.g. PUT /actualites/3 -> "/actualites").
+    const method = (response.config.method || "get").toLowerCase();
+    if (method !== "get") {
+      const segment = String(response.config.url || "").split("?")[0].split("/").filter(Boolean)[0];
+      invalidateCache(segment ? `/${segment}` : "");
+    }
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 403) {
-      console.error("Unauthorized: Token invalid or missing");
+    const status = error.response?.status;
+    const isLoginCall = String(error.config?.url || "").includes("/auth/login");
+    if (status === 401 && !isLoginCall) {
+      onUnauthorized?.();
+    } else if (status === 403) {
+      console.error("Forbidden: token invalid, missing or without permission");
     }
     return Promise.reject(error);
   }
 );
 
+/** Cached GET for public content (see services/cache.ts). Resolves like axios: { data }. */
+const cachedGet = <T = any>(url: string): Promise<{ data: T }> =>
+  cachedFetch(url, () => api.get<T>(url).then((r) => r.data)).then((data) => ({ data: data as T }));
+
 // API endpoints
-export const getMinisters = () => api.get("/aproposministere");
-export const getNews = () => api.get("/actualites");
+export const getMinisters = () => cachedGet("/aproposministere");
+export const getNews = () => cachedGet("/actualites");
 export const deleteNews = (id: number) => api.delete(`/actualites/${id}`);
-export const getNewsCategorie = () => api.get("/actualitescategories");
+export const getNewsCategorie = () => cachedGet("/actualitescategories");
+/** Menu rows; the home page layout is stored here (see services/homeLayout.ts). */
+export const getMenus = () => cachedGet("/menu");
 // api.ts
 
 export const createMinister = (data: {
@@ -77,7 +104,7 @@ export const createNews = (data: {
   return api.post("/actualites", data);
 };
 // Actualites Categories
-export const getActualitesCategories = () => api.get("/actualitescategories");
+export const getActualitesCategories = () => cachedGet("/actualitescategories");
 export const createActualiteCategorie = (data: {
   nomarabe: string;
   nomfrancais: string;
@@ -105,8 +132,8 @@ export const updateNews = (
 // Add these to your existing api.ts file
 
 // Announcements API
-export const getAnnouncements = () => api.get("/annonces");
-export const getAnnouncementById = (id: number) => api.get(`/annonces/${id}`);
+export const getAnnouncements = () => cachedGet("/annonces");
+export const getAnnouncementById = (id: number) => cachedGet(`/annonces/${id}`);
 
 export const createAnnouncement = (data: {
   titrearabe: string;
@@ -127,7 +154,7 @@ export const updateAnnouncement = (
 ) => api.put(`/annonces/${id}`, data);
 export const deleteAnnouncement = (id: number) => api.delete(`/annonces/${id}`);
 // Information API
-export const getInformation = () => api.get("/informations");
+export const getInformation = () => cachedGet("/informations");
 export const updateInformation = (id: number, data: any) =>
   api.put(`/informations/${id}`, data);
 export const createInformation = (data: any) => api.post("/informations", data);
@@ -141,7 +168,7 @@ export const deleteMessage = (id: number) => api.delete(`/messages/${id}`);
 export const createMessage = (data: any) => api.post("/messages", data);
 
 // Legislation API
-export const getLegislations = () => api.get("/lois");
+export const getLegislations = () => cachedGet("/lois");
 export const createLegislation = (data: {
   titrearabe: string;
   titrefrancais: string;
@@ -166,7 +193,7 @@ export const deleteLegislation = (id: number) => api.delete(`/lois/${id}`);
 export const getSliderById = (id: number) => api.get(`/slides/${id}`);
 
 // Add getSliders function
-export const getSliders = () => api.get("/slides");
+export const getSliders = () => cachedGet("/slides");
 export const createSlider = (data: {
   titrearabe: string;
   titrefrancais: string;
@@ -238,4 +265,15 @@ export const updateBibliothequeItem = (
 ) => api.put(`/bibliotheque/${id}`, data);
 export const deleteBibliothequeItem = (id: number) =>
   api.delete(`/bibliotheque/${id}`);
+// Public ministry content
+export const getTachesMinistere = () => cachedGet("/tachesministere");
+export const getListeTaches = () => cachedGet("/listetaches");
+export const getStructureAdministrative = () => cachedGet("/structureadministrative");
+export const getProjets = () => cachedGet("/projets");
+export const getSousEtablissements = () => cachedGet("/sousetablissements");
+export const getComptesSociaux = () => cachedGet("/comptessociaux");
+export const getVideos = () => cachedGet("/videos");
+export const getMotMinistre = () => cachedGet("/motministre");
+export const getProceduresServices = () => cachedGet("/procedures-services");
+
 export default api;

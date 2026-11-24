@@ -20,6 +20,8 @@ import {
 import { BibliothequeItem, BibliothequeCategorie } from "../../../types/types";
 import { toast } from "react-toastify";
 import AdminLayout from "../AdminLayout";
+import { useT } from "../../../i18n";
+import { mediaKind, mediaUrl } from "../../../utils/content";
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -29,6 +31,7 @@ const BibliothequeForm: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const { t, isArabic } = useT();
   const [isLoading, setIsLoading] = useState(false);
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [existingFiles, setExistingFiles] = useState<string[]>([]);
@@ -53,7 +56,7 @@ const BibliothequeForm: React.FC = () => {
         setCategories(response.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
-        toast.error("حدث خطأ أثناء جلب التصنيفات");
+        toast.error(t("حدث خطأ أثناء جلب التصنيفات", "Erreur lors du chargement des catégories"));
       }
     };
     fetchCategories();
@@ -79,7 +82,7 @@ const BibliothequeForm: React.FC = () => {
           }
         } catch (error) {
           console.error("Error fetching item:", error);
-          toast.error("حدث خطأ أثناء جلب بيانات العنصر");
+          toast.error(t("حدث خطأ أثناء جلب بيانات العنصر", "Erreur lors du chargement de l'élément"));
         } finally {
           setIsLoading(false);
         }
@@ -210,16 +213,16 @@ const BibliothequeForm: React.FC = () => {
 
       if (isEditMode) {
         await updateBibliothequeItem(parseInt(id!), payload);
-        toast.success("تم تحديث العنصر بنجاح");
+        toast.success(t("تم تحديث العنصر بنجاح", "Élément mis à jour avec succès"));
       } else {
         await createBibliothequeItem(payload);
-        toast.success("تمت إضافة العنصر بنجاح");
+        toast.success(t("تمت إضافة العنصر بنجاح", "Élément ajouté avec succès"));
       }
 
       navigate("/admin/bibliotheque");
     } catch (error) {
       console.error("Error saving item:", error);
-      toast.error("حدث خطأ أثناء حفظ البيانات");
+      toast.error(t("حدث خطأ أثناء حفظ البيانات", "Erreur lors de l'enregistrement des données"));
     } finally {
       setIsLoading(false);
     }
@@ -240,14 +243,14 @@ const BibliothequeForm: React.FC = () => {
     <AdminLayout>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-mauritania-green-dark">
-          {isEditMode ? "تعديل العنصر" : "إضافة عنصر جديد"}
+          {isEditMode ? t("تعديل العنصر", "Modifier l'élément") : t("إضافة عنصر جديد", "Ajouter un élément")}
         </h1>
         <button
           onClick={() => navigate("/admin/bibliotheque")}
-          className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300"
+          className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300 inline-flex items-center gap-2"
         >
-          <FontAwesomeIcon icon={faArrowLeft} className="ml-2" />
-          رجوع
+          <FontAwesomeIcon icon={faArrowLeft} className="rtl:rotate-180" />
+          {t("رجوع", "Retour")}
         </button>
       </div>
 
@@ -261,13 +264,14 @@ const BibliothequeForm: React.FC = () => {
                 className="block text-gray-700 mb-2"
                 htmlFor="descriptionarabe"
               >
-                الوصف (عربي) *
+                {t("الوصف (عربي)", "Description en arabe")} *
               </label>
               <textarea
                 id="descriptionarabe"
+                dir="rtl"
                 rows={3}
                 {...register("descriptionarabe", {
-                  required: "هذا الحقل مطلوب",
+                  required: t("هذا الحقل مطلوب", "Ce champ est obligatoire"),
                 })}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                   errors.descriptionarabe ? "border-red-500" : "border-gray-300"
@@ -286,13 +290,14 @@ const BibliothequeForm: React.FC = () => {
                 className="block text-gray-700 mb-2"
                 htmlFor="descriptionfrancais"
               >
-                الوصف (فرنسي) *
+                {t("الوصف (فرنسي)", "Description en français")} *
               </label>
               <textarea
                 id="descriptionfrancais"
+                dir="ltr"
                 rows={3}
                 {...register("descriptionfrancais", {
-                  required: "هذا الحقل مطلوب",
+                  required: t("هذا الحقل مطلوب", "Ce champ est obligatoire"),
                 })}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                   errors.descriptionfrancais
@@ -313,19 +318,19 @@ const BibliothequeForm: React.FC = () => {
             {/* Category select */}
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="categorieId">
-                التصنيف *
+                {t("التصنيف", "Catégorie")} *
               </label>
               <select
                 {...register("categorieId", {
-                  required: "اختر تصنيفاً",
+                  required: t("اختر تصنيفاً", "Choisissez une catégorie"),
                   valueAsNumber: true,
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green"
               >
-                <option value="">-- اختر تصنيفاً --</option>
+                <option value="">{t("-- اختر تصنيفاً --", "-- Choisissez une catégorie --")}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
-                    {cat.nomarabe}
+                    {isArabic ? cat.nomarabe : cat.nomfrancais || cat.nomarabe}
                   </option>
                 ))}
               </select>
@@ -339,7 +344,7 @@ const BibliothequeForm: React.FC = () => {
             {/* Order input */}
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="ordre">
-                الترتيب
+                {t("الترتيب", "Ordre")}
               </label>
               <input
                 id="ordre"
@@ -352,9 +357,9 @@ const BibliothequeForm: React.FC = () => {
             {/* Status toggle */}
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="etat">
-                الحالة
+                {t("الحالة", "Statut")}
               </label>
-              <div className="relative inline-block w-12 mr-2 align-middle select-none">
+              <div className="relative inline-block w-12 me-2 align-middle select-none">
                 <input
                   type="checkbox"
                   id="etat"
@@ -373,7 +378,7 @@ const BibliothequeForm: React.FC = () => {
                 ></label>
               </div>
               <span className="text-gray-700 font-medium">
-                {etatValue === undefined || etatValue ? "نشط" : "غير نشط"}
+                {etatValue === undefined || etatValue ? t("نشط", "Actif") : t("غير نشط", "Inactif")}
               </span>
             </div>
           </div>
@@ -381,7 +386,7 @@ const BibliothequeForm: React.FC = () => {
           {/* Enhanced File Upload */}
           <div className="mb-6">
             <label className="block text-gray-700 mb-2">
-              الملفات (صور أو فيديو)
+              {t("الملفات (صور أو فيديو)", "Fichiers (images ou vidéos)")}
             </label>
 
             <div
@@ -410,12 +415,10 @@ const BibliothequeForm: React.FC = () => {
                   {existingFiles.map((file, index) => (
                     <div key={`existing-${index}`} className="relative group">
                       <div className="h-32 w-full bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
-                        {file.startsWith("/9j/") ||
-                        file.startsWith("iVBORw") ||
-                        file.startsWith("JVBER") ? (
+                        {mediaKind(file) === "image" ? (
                           <img
-                            src={`data:image/jpeg;base64,${file}`}
-                            alt={`Existing ${index}`}
+                            src={mediaUrl(file) || undefined}
+                            alt={`${t("ملف موجود", "Fichier existant")} ${index + 1}`}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -424,7 +427,7 @@ const BibliothequeForm: React.FC = () => {
                               icon={faDownload}
                               className="text-2xl mb-2"
                             />
-                            <p className="text-xs truncate">ملف وسائط</p>
+                            <p className="text-xs truncate">{t("ملف وسائط", "Fichier multimédia")}</p>
                           </div>
                         )}
                       </div>
@@ -434,7 +437,9 @@ const BibliothequeForm: React.FC = () => {
                           e.stopPropagation();
                           removeExistingFile(index);
                         }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label={t("إزالة الملف", "Retirer le fichier")}
+                        title={t("إزالة الملف", "Retirer le fichier")}
+                        className="absolute -top-2 -end-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <FontAwesomeIcon icon={faTimes} className="text-xs" />
                       </button>
@@ -448,7 +453,7 @@ const BibliothequeForm: React.FC = () => {
                         {file.type.startsWith("image/") ? (
                           <img
                             src={file.preview}
-                            alt={`Preview ${index}`}
+                            alt={`${t("معاينة", "Aperçu")} ${index + 1}`}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -470,7 +475,9 @@ const BibliothequeForm: React.FC = () => {
                           e.stopPropagation();
                           removeFile(index);
                         }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label={t("إزالة الملف", "Retirer le fichier")}
+                        title={t("إزالة الملف", "Retirer le fichier")}
+                        className="absolute -top-2 -end-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <FontAwesomeIcon icon={faTimes} className="text-xs" />
                       </button>
@@ -483,7 +490,7 @@ const BibliothequeForm: React.FC = () => {
                       icon={faPlus}
                       className="text-gray-400 text-xl mb-2"
                     />
-                    <p className="text-sm text-gray-600">إضافة المزيد</p>
+                    <p className="text-sm text-gray-600">{t("إضافة المزيد", "Ajouter d'autres fichiers")}</p>
                   </div>
                 </div>
               ) : (
@@ -495,7 +502,7 @@ const BibliothequeForm: React.FC = () => {
                     />
                   </div>
                   <p className="text-sm text-gray-600">
-                    اسحب الملفات هنا أو انقر للاختيار
+                    {t("اسحب الملفات هنا أو انقر للاختيار", "Glissez les fichiers ici ou cliquez pour les sélectionner")}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     JPG, PNG, GIF, MP4, MOV
@@ -506,7 +513,7 @@ const BibliothequeForm: React.FC = () => {
 
             {isEditMode && (
               <p className="text-sm text-gray-500 mt-2">
-                سيتم استبدال الملفات الحالية بالملفات الجديدة التي تقوم برفعها
+                {t("سيتم استبدال الملفات الحالية بالملفات الجديدة التي تقوم برفعها", "Les fichiers actuels seront remplacés par les nouveaux fichiers que vous téléversez")}
               </p>
             )}
           </div>
@@ -516,10 +523,10 @@ const BibliothequeForm: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 focus:outline-none focus:ring-2 focus:ring-mauritania-green focus:ring-opacity-50 disabled:opacity-50"
+              className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 focus:outline-none focus:ring-2 focus:ring-mauritania-green focus:ring-opacity-50 disabled:opacity-50 inline-flex items-center gap-2"
             >
-              <FontAwesomeIcon icon={faSave} className="ml-2" />
-              {isLoading ? "جاري الحفظ..." : "حفظ البيانات"}
+              <FontAwesomeIcon icon={faSave} />
+              {isLoading ? t("جاري الحفظ...", "Enregistrement…") : t("حفظ البيانات", "Enregistrer")}
             </button>
           </div>
         </form>

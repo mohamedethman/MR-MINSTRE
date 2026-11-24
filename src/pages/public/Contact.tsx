@@ -11,11 +11,15 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { getInformation, createMessage } from "../../services/api";
 import { Information } from "../../types/types";
+import { useT } from "../../i18n";
+import PageHeader from "../../components/PageHeader";
+import LocationMap from "../../components/LocationMap";
 
 const Contact: React.FC = () => {
   const [information, setInformation] = useState<Information | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const { t, isArabic, dir } = useT();
 
   const {
     register,
@@ -46,11 +50,21 @@ const Contact: React.FC = () => {
     try {
       setIsSending(true);
       await createMessage(data);
-      toast.success("تم إرسال رسالتك بنجاح. سنرد عليك في أقرب وقت ممكن.");
+      toast.success(
+        t(
+          "تم إرسال رسالتك بنجاح. سنرد عليك في أقرب وقت ممكن.",
+          "Votre message a bien été envoyé. Nous vous répondrons dans les meilleurs délais."
+        )
+      );
       reset();
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.");
+      toast.error(
+        t(
+          "حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+          "Une erreur est survenue lors de l'envoi du message. Veuillez réessayer."
+        )
+      );
     } finally {
       setIsSending(false);
     }
@@ -58,21 +72,18 @@ const Contact: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mauritania-green"></div>
+      <div className="min-h-screen flex items-center justify-center" dir={dir}>
+        <div role="status" aria-label={t("جاري التحميل...", "Chargement…")} className="animate-spin rounded-full h-12 w-12 border-b-2 border-mauritania-green"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-mauritania-green-dark to-mauritania-green text-white py-20 text-center">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">تواصل معنا</h1>
-          <p className="text-xl">يسعدنا تلقي استفساراتكم وملاحظاتكم</p>
-        </div>
-      </section>
+    <div className="min-h-screen" dir={dir}>
+      <PageHeader
+        title={t("تواصل معنا", "Contactez-nous")}
+        subtitle={t("يسعدنا تلقي استفساراتكم وملاحظاتكم", "Nous serons heureux de recevoir vos questions et remarques")}
+      />
 
       {/* Contact Section */}
       <div className="container mx-auto px-4 py-12">
@@ -80,55 +91,58 @@ const Contact: React.FC = () => {
           {/* Contact Info */}
           <div className="bg-white p-8 rounded-lg shadow-custom">
             <h3 className="text-2xl font-bold text-mauritania-green-dark mb-6">
-              معلومات الاتصال
+              {t("معلومات الاتصال", "Coordonnées")}
             </h3>
 
             <div className="space-y-6">
               <div className="flex items-start">
-                <div className="bg-mauritania-green text-white p-3 rounded-full mr-4">
+                <div className="bg-mauritania-green text-white p-3 rounded-full me-4">
                   <FontAwesomeIcon icon={faMapMarkerAlt} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-800">العنوان</h4>
+                  <h4 className="font-bold text-gray-800">{t("العنوان", "Adresse")}</h4>
                   <p className="text-gray-600">
-                    {information?.adresse || "شارع الوزارة، نواكشوط، موريتانيا"}
+                    {(isArabic
+                      ? information?.adressear || information?.adresse
+                      : information?.adresse || information?.adressear) || "—"}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="bg-mauritania-green text-white p-3 rounded-full mr-4">
+                <div className="bg-mauritania-green text-white p-3 rounded-full me-4">
                   <FontAwesomeIcon icon={faPhone} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-800">الهاتف</h4>
+                  <h4 className="font-bold text-gray-800">{t("الهاتف", "Téléphone")}</h4>
                   <p className="text-gray-600">
-                    {information?.telephone || "+222 1234 5678"}
+                    {information?.telephone || "—"}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="bg-mauritania-green text-white p-3 rounded-full mr-4">
+                <div className="bg-mauritania-green text-white p-3 rounded-full me-4">
                   <FontAwesomeIcon icon={faEnvelope} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-800">البريد الإلكتروني</h4>
+                  <h4 className="font-bold text-gray-800">{t("البريد الإلكتروني", "Adresse e-mail")}</h4>
                   <p className="text-gray-600">
-                    {information?.email || "contact@mre.gov.mr"}
+                    {information?.email || "—"}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start">
-                <div className="bg-mauritania-green text-white p-3 rounded-full mr-4">
+                <div className="bg-mauritania-green text-white p-3 rounded-full me-4">
                   <FontAwesomeIcon icon={faClock} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-800">ساعات العمل</h4>
+                  <h4 className="font-bold text-gray-800">{t("ساعات العمل", "Horaires d'ouverture")}</h4>
                   <p className="text-gray-600">
-                    {information?.horaires ||
-                      "الأحد - الخميس: 8:00 صباحاً - 4:00 مساءً"}
+                    {(isArabic
+                      ? information?.horairesar || information?.horaires
+                      : information?.horaires || information?.horairesar) || "—"}
                   </p>
                 </div>
               </div>
@@ -138,18 +152,18 @@ const Contact: React.FC = () => {
           {/* Contact Form */}
           <div className="bg-white p-8 rounded-lg shadow-custom">
             <h3 className="text-2xl font-bold text-mauritania-green-dark mb-6">
-              أرسل رسالة
+              {t("أرسل رسالة", "Envoyer un message")}
             </h3>
 
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="mb-4">
                 <label htmlFor="name" className="block text-gray-700 mb-2">
-                  الاسم الكامل *
+                  {t("الاسم الكامل", "Nom complet")} *
                 </label>
                 <input
                   type="text"
                   id="name"
-                  {...register("nom", { required: "الاسم مطلوب" })}
+                  {...register("nom", { required: t("الاسم مطلوب", "Le nom est obligatoire") })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.nom ? "border-red-500" : "border-gray-300"
                   }`}
@@ -163,16 +177,16 @@ const Contact: React.FC = () => {
 
               <div className="mb-4">
                 <label htmlFor="email" className="block text-gray-700 mb-2">
-                  البريد الإلكتروني *
+                  {t("البريد الإلكتروني", "Adresse e-mail")} *
                 </label>
                 <input
                   type="email"
                   id="email"
                   {...register("email", {
-                    required: "البريد الإلكتروني مطلوب",
+                    required: t("البريد الإلكتروني مطلوب", "L'adresse e-mail est obligatoire"),
                     pattern: {
                       value: /^\S+@\S+$/i,
-                      message: "بريد إلكتروني غير صالح",
+                      message: t("بريد إلكتروني غير صالح", "Adresse e-mail invalide"),
                     },
                   })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
@@ -188,12 +202,12 @@ const Contact: React.FC = () => {
 
               <div className="mb-4">
                 <label htmlFor="subject" className="block text-gray-700 mb-2">
-                  الموضوع *
+                  {t("الموضوع", "Objet")} *
                 </label>
                 <input
                   type="text"
                   id="subject"
-                  {...register("objet", { required: "الموضوع مطلوب" })}
+                  {...register("objet", { required: t("الموضوع مطلوب", "L'objet est obligatoire") })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.objet ? "border-red-500" : "border-gray-300"
                   }`}
@@ -207,12 +221,12 @@ const Contact: React.FC = () => {
 
               <div className="mb-4">
                 <label htmlFor="message" className="block text-gray-700 mb-2">
-                  الرسالة *
+                  {t("الرسالة", "Message")} *
                 </label>
                 <textarea
                   id="message"
                   rows={5}
-                  {...register("message", { required: "الرسالة مطلوبة" })}
+                  {...register("message", { required: t("الرسالة مطلوبة", "Le message est obligatoire") })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.message ? "border-red-500" : "border-gray-300"
                   }`}
@@ -229,7 +243,7 @@ const Contact: React.FC = () => {
                 disabled={isSending}
                 className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 disabled:opacity-50"
               >
-                {isSending ? "جاري الإرسال..." : "إرسال الرسالة"}
+                {isSending ? t("جاري الإرسال...", "Envoi en cours…") : t("إرسال الرسالة", "Envoyer")}
               </button>
             </form>
           </div>
@@ -238,11 +252,9 @@ const Contact: React.FC = () => {
         {/* Map Section */}
         <div className="mt-12 bg-white p-6 rounded-lg shadow-custom">
           <h3 className="text-2xl font-bold text-mauritania-green-dark mb-6">
-            موقعنا على الخريطة
+            {t("موقعنا على الخريطة", "Notre emplacement sur la carte")}
           </h3>
-          <div className="h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-            <p className="text-gray-500">خريطة الموقع ستظهر هنا</p>
-          </div>
+          <LocationMap className="h-80" />
         </div>
       </div>
     </div>

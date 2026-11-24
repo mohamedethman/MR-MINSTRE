@@ -1,83 +1,65 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Minister } from "../../types/types";
-import { getMinisters } from "../../services/api";
+import { getMinisters, getMotMinistre } from "../../services/api";
 import { useLanguage } from "../../context/LanguageContext";
 import { getTranslation } from "../../utils/translations";
+import PageHeader from "../../components/PageHeader";
+import SectionTitle from "../../components/SectionTitle";
+import RichText from "../../components/RichText";
+import { isEmptyHtml, mediaUrl, pickLang } from "../../utils/content";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowLeft,
-  faUserTie,
-  faSpinner,
-  faFileAlt,
-  faHandshake,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faUserTie, faSpinner } from "@fortawesome/free-solid-svg-icons";
+
+interface MotMinistre {
+  id: number;
+  titrearabe?: string;
+  titrefrancais?: string;
+  textarabe?: string;
+  textfrancais?: string;
+}
 
 const MinisterPage: React.FC = () => {
   const [minister, setMinister] = useState<Minister | null>(null);
+  const [word, setWord] = useState<MotMinistre | null>(null);
   const [loading, setLoading] = useState(true);
   const { language } = useLanguage();
-
-  // Clean HTML tags from text - same function as in Ministry.tsx
-  const cleanHtmlTags = (text: string) => {
-    if (!text) return "";
-    return text
-      .replace(/<p><p>/g, "")
-      .replace(/<p>/g, "")
-      .replace(/<\/p>/g, "\n")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/&nbsp;/g, " ")
-      .replace(/<[^>]*>/g, "")
-      .trim();
-  };
-
-  const fetchMinister = async () => {
-    try {
-      setLoading(true);
-      const response = await getMinisters();
-      if (response.data && response.data.length > 0) {
-        const firstMinister = response.data[0];
-        const ministerData: Minister = {
-          ...firstMinister,
-          textarabe: cleanHtmlTags(firstMinister.textarabe || ""),
-          textfrancais: cleanHtmlTags(firstMinister.textfrancais || ""),
-          image: firstMinister.image?.startsWith("data:")
-            ? firstMinister.image
-            : firstMinister.image
-            ? `data:image/jpeg;base64,${firstMinister.image}`
-            : "https://via.placeholder.com/300x400/007a45/FFFFFF?text=وزير+العقارات",
-        };
-        setMinister(ministerData);
-      }
-    } catch (error) {
-      console.error("Error fetching minister:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isArabic = language === "ar";
+  const dir = isArabic ? "rtl" : "ltr";
 
   useEffect(() => {
-    fetchMinister();
+    let mounted = true;
+    Promise.allSettled([getMinisters(), getMotMinistre()]).then(([ministerResult, wordResult]) => {
+      if (!mounted) return;
+      if (ministerResult.status === "fulfilled" && Array.isArray(ministerResult.value.data)) {
+        setMinister(ministerResult.value.data[0] || null);
+      }
+      if (wordResult.status === "fulfilled" && Array.isArray(wordResult.value.data)) {
+        setWord(wordResult.value.data[0] || null);
+      }
+      setLoading(false);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Direction and text alignment
-  const getDirectionClass = () => (language === "ar" ? "rtl" : "ltr");
-  const getTextAlignClass = () =>
-    language === "ar" ? "text-right" : "text-left";
+  const backLink = (
+    <Link
+      to="/ministry"
+      className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-mauritania-green-dark transition duration-300 hover:bg-gray-100"
+    >
+      <FontAwesomeIcon icon={faArrowLeft} className={isArabic ? "rotate-180" : ""} />
+      {getTranslation("backToMinistry", language)}
+    </Link>
+  );
 
   if (loading) {
     return (
-      <div className={`min-h-screen bg-gray-50 ${getDirectionClass()}`}>
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center py-20">
-            <FontAwesomeIcon
-              icon={faSpinner}
-              className="text-mauritania-green-dark text-6xl animate-spin mb-4"
-            />
-            <p className="text-gray-600 text-xl">
-              {getTranslation("loadingMinister", language)}
-            </p>
-          </div>
+      <div dir={dir} className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-16 text-center">
+          <FontAwesomeIcon icon={faSpinner} className="mb-4 animate-spin text-6xl text-mauritania-green-dark" />
+          <p className="text-xl text-gray-600">{getTranslation("loadingMinister", language)}</p>
         </div>
       </div>
     );
@@ -85,186 +67,66 @@ const MinisterPage: React.FC = () => {
 
   if (!minister) {
     return (
-      <div className={`min-h-screen bg-gray-50 ${getDirectionClass()}`}>
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center py-20">
-            <FontAwesomeIcon
-              icon={faUserTie}
-              className="text-gray-400 text-6xl mb-4"
-            />
-            <h2 className="text-2xl font-bold text-gray-600 mb-4">
-              {getTranslation("noMinisterData", language)}
-            </h2>
-            <Link
-              to="/ministry"
-              className="inline-flex items-center px-6 py-3 bg-mauritania-green-dark text-white rounded-lg hover:bg-mauritania-green transition duration-300"
-            >
-              <FontAwesomeIcon
-                icon={faArrowLeft}
-                className={`mr-2 ${language === "ar" ? "ml-2 rotate-180" : ""}`}
-              />
-              {getTranslation("backToMinistry", language)}
-            </Link>
-          </div>
+      <div dir={dir} className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-20 text-center">
+          <FontAwesomeIcon icon={faUserTie} className="mb-4 text-6xl text-gray-400" />
+          <h2 className="mb-6 text-2xl font-bold text-gray-600">{getTranslation("noMinisterData", language)}</h2>
+          <div className="[&>a]:bg-mauritania-green-dark [&>a]:text-white">{backLink}</div>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className={`min-h-screen bg-gray-50 ${getDirectionClass()}`}>
-      {/* Breadcrumb */}
+  const name = pickLang(isArabic, minister.titrearabe, minister.titrefrancais);
+  const image = mediaUrl(minister.image);
+  const cv = isArabic ? minister.textarabe || minister.textfrancais : minister.textfrancais || minister.textarabe;
+  const wordTitle = word ? pickLang(isArabic, word.titrearabe, word.titrefrancais) : "";
+  const wordText = word ? (isArabic ? word.textarabe || word.textfrancais : word.textfrancais || word.textarabe) : "";
 
-      {/* Minister Header */}
-      <section className="bg-gradient-to-r from-mauritania-green-dark to-mauritania-green text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className={`md:w-2/3 ${getTextAlignClass()} mb-8 md:mb-0`}>
-              <h1 className="text-4xl font-bold mb-4">
-                {getTranslation("minister", language)}
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/ministry"
-                className="inline-flex items-center px-6 py-3 bg-white text-mauritania-green-dark rounded-lg font-semibold hover:bg-gray-100 transition duration-300"
-              >
-                <FontAwesomeIcon
-                  icon={faArrowLeft}
-                  className={`mr-2 ${
-                    language === "ar" ? "ml-2 rotate-180" : ""
-                  }`}
-                />
-                {getTranslation("backToMinistry", language)}
-              </Link>
+  return (
+    <div dir={dir} className="min-h-screen bg-gray-50">
+      <PageHeader
+        title={getTranslation("minister", language)}
+        crumbs={[{ label: getTranslation("aboutMinistry", language), to: "/ministry" }]}
+      />
+
+      <section className="py-8">
+        <div className="container mx-auto flex flex-col gap-12 px-4 lg:flex-row">
+          <div className="lg:w-1/3">
+            <div className="sticky top-36 overflow-hidden rounded-lg bg-white shadow-lg">
+              <div className="relative">
+                {image ? (
+                  <img src={image} alt={name} className="h-80 w-full object-cover" />
+                ) : (
+                  <div className="flex h-80 w-full items-center justify-center bg-mauritania-green-dark/10">
+                    <FontAwesomeIcon icon={faUserTie} className="text-8xl text-mauritania-green-dark/30" />
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                  {name && <h2 className="mb-1 text-2xl font-bold text-white">{name}</h2>}
+                  <p className="font-semibold text-mauritania-gold">{getTranslation("minister", language)}</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Minister Content */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row gap-12">
-            {/* Sidebar - Minister Info */}
-            <div className="lg:w-1/3">
-              <div className="bg-white rounded-lg shadow-lg sticky top-8 overflow-hidden">
-                {/* Minister Photo */}
-                <div className="relative">
-                  <img
-                    src={minister.image}
-                    alt={getTranslation("minister", language)}
-                    className="w-full h-80 object-cover"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      {minister.titrearabe}
-                    </h2>
-                    <p className="text-mauritania-gold font-semibold">
-                      {language === "ar"
-                        ? "وزير العقارات وأملاك الدولة"
-                        : "Ministre des Domaines et des Affaires Foncières"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Minister Details */}
-                {/* <div className="p-6">
-                  <h3 className="text-lg font-bold text-mauritania-green-dark mb-4 flex items-center">
-                    <FontAwesomeIcon icon={faUserTie} className="mr-2" />
-                    {getTranslation("minister", language)}
-                  </h3>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center text-gray-700">
-                      <FontAwesomeIcon
-                        icon={faUserTie}
-                        className="mr-3 text-mauritania-green"
-                      />
-                      <span className="font-semibold">
-                        {minister.titrefrancais}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center text-gray-700">
-                      <FontAwesomeIcon
-                        icon={faFileAlt}
-                        className="mr-3 text-mauritania-green"
-                      />
-                      <span>
-                        {language === "ar"
-                          ? "وزير العقارات وأملاك الدولة"
-                          : "Ministre des Domaines et des Affaires Foncières"}
-                      </span>
-                    </div>
-                  </div>
-                </div> */}
+          <div className="lg:w-2/3">
+            {!isEmptyHtml(wordText) && (
+              <div className="mb-8 rounded-lg bg-white p-8 shadow-lg">
+                <SectionTitle title={wordTitle || (isArabic ? "كلمة الوزير" : "Mot du Ministre")} />
+                <RichText html={wordText} dir={dir} />
               </div>
-            </div>
+            )}
 
-            {/* Main Content */}
-            <div className="lg:w-2/3">
-              {/* Welcome Message */}
-              <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-                <div className="flex items-center mb-6">
-                  <div className="bg-mauritania-green-light p-3 rounded-full mr-4">
-                    <FontAwesomeIcon
-                      icon={faHandshake}
-                      className="text-mauritania-green-dark text-2xl"
-                    />
-                  </div>
-                  <h2 className="text-2xl font-bold text-mauritania-green-dark">
-                    {language === "ar" ? "كلمة ترحيب" : "Mot de Bienvenue"}
-                  </h2>
-                </div>
-
-                <div className="prose max-w-none">
-                  <p className="text-gray-700 text-lg leading-relaxed mb-6 italic border-r-4 border-mauritania-gold pr-4">
-                    {language === "ar"
-                      ? "يسعدني أن أرحب بكم في الموقع الرسمي لوزارة العقارات وأملاك الدولة. نعمل بجد لخدمة المواطن وتحسين الخدمات العقارية."
-                      : "Je suis heureux de vous souhaiter la bienvenue sur le site officiel du Ministère des Domaines et des Affaires Foncières. Nous travaillons dur pour servir le citoyen et améliorer les services immobiliers."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Full CV Section */}
-              <div className="bg-white rounded-lg shadow-lg p-8">
-                <div className="flex items-center mb-6">
-                  <div className="bg-mauritania-green-light p-3 rounded-full mr-4">
-                    <FontAwesomeIcon
-                      icon={faFileAlt}
-                      className="text-mauritania-green-dark text-2xl"
-                    />
-                  </div>
-                  <h2 className="text-2xl font-bold text-mauritania-green-dark">
-                    {getTranslation("ministerCV", language)}
-                  </h2>
-                </div>
-
-                <div className="text-gray-700 leading-relaxed">
-                  {language === "ar" ? (
-                    minister.textarabe ? (
-                      <div className="whitespace-pre-line text-lg leading-8">
-                        {minister.textarabe}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 italic text-center py-8">
-                        لا تتوفر السيرة الذاتية الكاملة حالياً. سيتم إضافة
-                        المعلومات قريباً.
-                      </p>
-                    )
-                  ) : minister.textfrancais ? (
-                    <div className="whitespace-pre-line text-lg leading-8">
-                      {minister.textfrancais}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 italic text-center py-8">
-                      Le curriculum vitae complet n'est pas disponible pour le
-                      moment. Les informations seront ajoutées prochainement.
-                    </p>
-                  )}
-                </div>
-              </div>
+            <div className="rounded-lg bg-white p-8 shadow-lg">
+              <SectionTitle title={getTranslation("ministerCV", language)} />
+              {isEmptyHtml(cv) ? (
+                <p className="py-8 text-center italic text-gray-500">
+                  {isArabic ? "لا تتوفر السيرة الذاتية الكاملة حالياً." : "Le curriculum vitae complet n'est pas disponible pour le moment."}
+                </p>
+              ) : (
+                <RichText html={cv} dir={dir} className="text-lg" />
+              )}
             </div>
           </div>
         </div>

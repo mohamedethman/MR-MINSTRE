@@ -3,7 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import { getAnnouncementById } from "../../services/api";
 import { Announcement } from "../../types/types";
 import { useLanguage } from "../../context/LanguageContext";
-import { getTranslation } from "../../utils/translations";
+import { useT } from "../../i18n";
+import RichText from "../../components/RichText";
+import { isEmptyHtml } from "../../utils/content";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
@@ -17,6 +19,9 @@ const AnnouncementDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { id } = useParams<{ id: string }>();
   const { language } = useLanguage();
+  const { t, isArabic, dir, formatDate } = useT();
+  // "Back" points right in RTL, left in LTR
+  const backArrowClass = isArabic ? "rotate-180" : "";
 
   useEffect(() => {
     if (id) {
@@ -36,27 +41,10 @@ const AnnouncementDetail: React.FC = () => {
     }
   };
 
-  // Clean HTML tags from text
-  const cleanHtmlTags = (text: string) => {
-    if (!text) return "";
-    return text
-      .replace(/<p><p>/g, "")
-      .replace(/<p>/g, "")
-      .replace(/<\/p>/g, "\n")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/&nbsp;/g, " ")
-      .replace(/<[^>]*>/g, "")
-      .trim();
-  };
-
-  // Direction and text alignment
-  const getDirectionClass = () => (language === "ar" ? "rtl" : "ltr");
-  const getTextAlignClass = () =>
-    language === "ar" ? "text-right" : "text-left";
 
   if (loading) {
     return (
-      <div className={`min-h-screen bg-gray-50 ${getDirectionClass()}`}>
+      <div className="min-h-screen bg-gray-50" dir={dir}>
         <div className="container mx-auto px-4 py-16">
           <div className="text-center py-20">
             <FontAwesomeIcon
@@ -64,7 +52,7 @@ const AnnouncementDetail: React.FC = () => {
               className="text-mauritania-green-dark text-6xl animate-spin mb-4"
             />
             <p className="text-gray-600 text-xl">
-              {getTranslation("loading", language)}
+              {t("جاري التحميل...", "Chargement…")}
             </p>
           </div>
         </div>
@@ -74,7 +62,7 @@ const AnnouncementDetail: React.FC = () => {
 
   if (!announcement) {
     return (
-      <div className={`min-h-screen bg-gray-50 ${getDirectionClass()}`}>
+      <div className="min-h-screen bg-gray-50" dir={dir}>
         <div className="container mx-auto px-4 py-16">
           <div className="text-center py-20">
             <FontAwesomeIcon
@@ -82,17 +70,14 @@ const AnnouncementDetail: React.FC = () => {
               className="text-gray-400 text-6xl mb-4"
             />
             <h2 className="text-2xl font-bold text-gray-600 mb-4">
-              {getTranslation("announcementNotFound", language)}
+              {t("الإعلان غير موجود", "Annonce introuvable")}
             </h2>
             <Link
               to="/announcements"
-              className="inline-flex items-center px-6 py-3 bg-mauritania-green-dark text-white rounded-lg hover:bg-mauritania-green transition duration-300"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-mauritania-green-dark text-white rounded-lg hover:bg-mauritania-green transition duration-300"
             >
-              <FontAwesomeIcon
-                icon={faArrowLeft}
-                className={`mr-2 ${language === "ar" ? "ml-2 rotate-180" : ""}`}
-              />
-              {getTranslation("backToAnnouncements", language)}
+              <FontAwesomeIcon icon={faArrowLeft} className={backArrowClass} />
+              {t("العودة إلى صفحة الإعلانات", "Retour aux annonces")}
             </Link>
           </div>
         </div>
@@ -101,19 +86,22 @@ const AnnouncementDetail: React.FC = () => {
   }
 
   const getTitle = () => {
-    return language === "ar"
-      ? announcement.titrearabe || announcement.titrefrancais || "بدون عنوان"
-      : announcement.titrefrancais || announcement.titrearabe || "Sans titre";
+    return (
+      (isArabic
+        ? announcement.titrearabe || announcement.titrefrancais
+        : announcement.titrefrancais || announcement.titrearabe) ||
+      t("بدون عنوان", "Sans titre")
+    );
   };
 
   const getContent = () => {
-    const content =
-      language === "ar" ? announcement.textarabe : announcement.textfrancais;
-    return cleanHtmlTags(content || "");
+    return (isArabic
+      ? announcement.textarabe || announcement.textfrancais
+      : announcement.textfrancais || announcement.textarabe) || "";
   };
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${getDirectionClass()}`}>
+    <div className="min-h-screen bg-gray-50" dir={dir}>
       {/* Breadcrumb */}
 
       {/* Announcement Content */}
@@ -125,28 +113,17 @@ const AnnouncementDetail: React.FC = () => {
               <div className="flex justify-between items-start mb-4">
                 <Link
                   to="/announcements"
-                  className="inline-flex items-center px-4 py-2 bg-white text-mauritania-green-dark rounded-lg font-semibold hover:bg-gray-100 transition duration-300"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white text-mauritania-green-dark rounded-lg font-semibold hover:bg-gray-100 transition duration-300"
                 >
-                  <FontAwesomeIcon
-                    icon={faArrowLeft}
-                    className={`mr-2 ${
-                      language === "ar" ? "ml-2 rotate-180" : ""
-                    }`}
-                  />
-                  {getTranslation("backToAnnouncements", language)}
+                  <FontAwesomeIcon icon={faArrowLeft} className={backArrowClass} />
+                  {t("العودة إلى صفحة الإعلانات", "Retour aux annonces")}
                 </Link>
 
-                <div className="flex items-center text-mauritania-gold">
-                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                <div className="flex items-center gap-2 text-mauritania-gold">
+                  <FontAwesomeIcon icon={faCalendarAlt} />
                   <span>
-                    {new Date(announcement.datepublication).toLocaleDateString(
-                      language === "ar" ? "ar-EG" : "fr-FR",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }
-                    )}
+                    {formatDate(announcement.datepublication) ||
+                      t("غير محدد التاريخ", "Date non précisée")}
                   </span>
                 </div>
               </div>
@@ -154,10 +131,13 @@ const AnnouncementDetail: React.FC = () => {
               <h1 className="text-3xl font-bold mb-4">{getTitle()}</h1>
 
               {/* Alternative title */}
-              {(language === "ar" && announcement.titrefrancais) ||
-              (language === "fr" && announcement.titrearabe) ? (
-                <p className="text-mauritania-gold-light opacity-90 text-lg">
-                  {language === "ar"
+              {(isArabic && announcement.titrefrancais) ||
+              (!isArabic && announcement.titrearabe) ? (
+                <p
+                  className="text-mauritania-gold-light opacity-90 text-lg"
+                  dir={isArabic ? "ltr" : "rtl"}
+                >
+                  {isArabic
                     ? announcement.titrefrancais
                     : announcement.titrearabe}
                 </p>
@@ -166,17 +146,16 @@ const AnnouncementDetail: React.FC = () => {
 
             {/* Content */}
             <div className="p-8">
-              <div className="prose max-w-none">
-                <div className="text-gray-700 leading-relaxed text-lg whitespace-pre-line">
-                  {getContent() || (
-                    <p className="text-gray-500 italic">
-                      {language === "ar"
-                        ? "لا يوجد محتوى متاح لهذا الإعلان."
-                        : "Aucun contenu disponible pour cette annonce."}
-                    </p>
+              {isEmptyHtml(getContent()) ? (
+                <p className="text-gray-500 italic">
+                  {t(
+                    "لا يوجد محتوى متاح لهذا الإعلان.",
+                    "Aucun contenu disponible pour cette annonce."
                   )}
-                </div>
-              </div>
+                </p>
+              ) : (
+                <RichText html={getContent()} dir={dir} className="text-lg" />
+              )}
             </div>
           </div>
         </div>

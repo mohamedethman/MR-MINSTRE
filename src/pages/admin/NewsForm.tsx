@@ -23,6 +23,8 @@ import { toast } from "react-toastify";
 import AdminLayout from "./AdminLayout";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { useT } from "../../i18n";
+import { downloadMedia, mediaUrl, openMedia } from "../../utils/content";
 
 // ✅ Custom Quill Toolbar (same as MinisterForm)
 const quillModules = {
@@ -45,6 +47,7 @@ const NewsForm: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const { t } = useT();
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<FileWithPreview | null>(null);
   const [existingImage, setExistingImage] = useState<string | null>(null);
@@ -72,7 +75,7 @@ const NewsForm: React.FC = () => {
         setCategories(response.data);
       } catch (error) {
         console.error("Error fetching categories:", error);
-        toast.error("حدث خطأ أثناء جلب التصنيفات");
+        toast.error(t("حدث خطأ أثناء جلب التصنيفات", "Erreur lors du chargement des catégories"));
       }
     };
     fetchCategories();
@@ -105,7 +108,7 @@ const NewsForm: React.FC = () => {
           }
         } catch (error) {
           console.error("Error fetching news:", error);
-          toast.error("حدث خطأ أثناء جلب بيانات الخبر");
+          toast.error(t("حدث خطأ أثناء جلب بيانات الخبر", "Erreur lors du chargement de l'actualité"));
         } finally {
           setIsLoading(false);
         }
@@ -163,23 +166,11 @@ const NewsForm: React.FC = () => {
   };
 
   const handleViewImage = () => {
-    if (existingImage) {
-      const imageWindow = window.open();
-      if (imageWindow) {
-        imageWindow.document.write(`
-          <img src="data:image/jpeg;base64,${existingImage}" style="max-width: 100%; height: auto;" />
-        `);
-      }
-    }
+    openMedia(existingImage);
   };
 
   const handleDownloadImage = () => {
-    if (existingImage) {
-      const link = document.createElement("a");
-      link.href = `data:image/jpeg;base64,${existingImage}`;
-      link.download = "news-image.jpg";
-      link.click();
-    }
+    downloadMedia(existingImage, "news-image.jpg");
   };
 
   const toBase64 = (file: File): Promise<string> => {
@@ -220,16 +211,16 @@ const NewsForm: React.FC = () => {
 
       if (isEditMode) {
         await updateNews(parseInt(id!), payload);
-        toast.success("تم تحديث الخبر بنجاح");
+        toast.success(t("تم تحديث الخبر بنجاح", "Actualité mise à jour avec succès"));
       } else {
         await createNews(payload);
-        toast.success("تمت إضافة الخبر بنجاح");
+        toast.success(t("تمت إضافة الخبر بنجاح", "Actualité ajoutée avec succès"));
       }
 
       navigate("/admin/news");
     } catch (error) {
       console.error("Error saving news:", error);
-      toast.error("حدث خطأ أثناء حفظ البيانات");
+      toast.error(t("حدث خطأ أثناء حفظ البيانات", "Erreur lors de l'enregistrement des données"));
     } finally {
       setIsLoading(false);
     }
@@ -280,14 +271,14 @@ const NewsForm: React.FC = () => {
 
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-mauritania-green-dark">
-          {isEditMode ? "تعديل الخبر" : "إضافة خبر جديد"}
+          {isEditMode ? t("تعديل الخبر", "Modifier l'actualité") : t("إضافة خبر جديد", "Ajouter une actualité")}
         </h1>
         <button
           onClick={() => navigate("/admin/news")}
-          className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300"
+          className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300 inline-flex items-center gap-2"
         >
-          <FontAwesomeIcon icon={faArrowLeft} className="ml-2" />
-          رجوع
+          <FontAwesomeIcon icon={faArrowLeft} className="rtl:rotate-180" />
+          {t("رجوع", "Retour")}
         </button>
       </div>
 
@@ -298,12 +289,13 @@ const NewsForm: React.FC = () => {
             {/* Arabic title */}
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="titrearabe">
-                العنوان (عربي) *
+                {t("العنوان (عربي)", "Titre en arabe")} *
               </label>
               <input
                 id="titrearabe"
                 type="text"
-                {...register("titrearabe", { required: "هذا الحقل مطلوب" })}
+                dir="rtl"
+                {...register("titrearabe", { required: t("هذا الحقل مطلوب", "Ce champ est obligatoire") })}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                   errors.titrearabe ? "border-red-500" : "border-gray-300"
                 }`}
@@ -321,12 +313,13 @@ const NewsForm: React.FC = () => {
                 className="block text-gray-700 mb-2"
                 htmlFor="titrefrancais"
               >
-                العنوان (فرنسي) *
+                {t("العنوان (فرنسي)", "Titre en français")} *
               </label>
               <input
                 id="titrefrancais"
                 type="text"
-                {...register("titrefrancais", { required: "هذا الحقل مطلوب" })}
+                dir="ltr"
+                {...register("titrefrancais", { required: t("هذا الحقل مطلوب", "Ce champ est obligatoire") })}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                   errors.titrefrancais ? "border-red-500" : "border-gray-300"
                 }`}
@@ -344,13 +337,13 @@ const NewsForm: React.FC = () => {
             {/* Category select */}
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="categorieid">
-                التصنيف *
+                {t("التصنيف", "Catégorie")} *
               </label>
               <select
-                {...register("categorieid", { required: "اختر تصنيفاً" })}
+                {...register("categorieid", { required: t("اختر تصنيفاً", "Choisissez une catégorie") })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green"
               >
-                <option value="">-- اختر تصنيفاً --</option>
+                <option value="">{t("-- اختر تصنيفاً --", "-- Choisissez une catégorie --")}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.nomarabe} / {cat.nomfrancais}
@@ -370,14 +363,14 @@ const NewsForm: React.FC = () => {
                 className="block text-gray-700 mb-2"
                 htmlFor="datepublication"
               >
-                تاريخ النشر *
+                {t("تاريخ النشر", "Date de publication")} *
               </label>
               <div className="relative">
                 <input
                   id="datepublication"
                   type="date"
                   {...register("datepublication", {
-                    required: "هذا الحقل مطلوب",
+                    required: t("هذا الحقل مطلوب", "Ce champ est obligatoire"),
                   })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                     errors.datepublication
@@ -387,7 +380,7 @@ const NewsForm: React.FC = () => {
                 />
                 <FontAwesomeIcon
                   icon={faCalendarAlt}
-                  className="absolute left-3 top-3 text-gray-400 pointer-events-none"
+                  className="absolute end-3 top-3 text-gray-400 pointer-events-none"
                 />
               </div>
               {errors.datepublication && (
@@ -400,7 +393,7 @@ const NewsForm: React.FC = () => {
 
           {/* Arabic text */}
           <div className="mb-6">
-            <label className="block text-gray-700 mb-2">النص (عربي)</label>
+            <label className="block text-gray-700 mb-2">{t("النص (عربي)", "Contenu en arabe")}</label>
             <div className="rtl-quill">
               <ReactQuill
                 theme="snow"
@@ -414,7 +407,7 @@ const NewsForm: React.FC = () => {
 
           {/* French text */}
           <div className="mb-6">
-            <label className="block text-gray-700 mb-2">النص (فرنسي)</label>
+            <label className="block text-gray-700 mb-2">{t("النص (فرنسي)", "Contenu en français")}</label>
             <div className="ltr-quill">
               <ReactQuill
                 theme="snow"
@@ -428,7 +421,7 @@ const NewsForm: React.FC = () => {
 
           {/* Enhanced Image Upload */}
           <div className="mb-6">
-            <label className="block text-gray-700 mb-2">صورة الخبر</label>
+            <label className="block text-gray-700 mb-2">{t("صورة الخبر", "Image de l'actualité")}</label>
 
             <div
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
@@ -457,7 +450,7 @@ const NewsForm: React.FC = () => {
                   <div className="relative">
                     <img
                       src={imageFile.preview}
-                      alt="Preview"
+                      alt={t("معاينة", "Aperçu")}
                       className="h-32 w-32 object-cover rounded-md mb-2"
                     />
                     <button
@@ -466,7 +459,9 @@ const NewsForm: React.FC = () => {
                         e.stopPropagation();
                         removeFile();
                       }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      aria-label={t("إزالة الصورة", "Supprimer l'image")}
+                      title={t("إزالة الصورة", "Supprimer l'image")}
+                      className="absolute -top-2 -end-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                     >
                       <FontAwesomeIcon icon={faTimes} className="text-xs" />
                     </button>
@@ -482,15 +477,15 @@ const NewsForm: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <div className="relative">
                     <img
-                      src={`data:image/jpeg;base64,${existingImage}`}
-                      alt="Existing"
+                      src={mediaUrl(existingImage) || undefined}
+                      alt={t("الصورة الحالية", "Image actuelle")}
                       className="h-32 w-32 object-cover rounded-md mb-2"
                     />
                   </div>
                   <p className="text-sm font-medium text-green-700 mb-2">
-                    صورة موجودة
+                    {t("صورة موجودة", "Image existante")}
                   </p>
-                  <div className="flex space-x-2">
+                  <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -499,7 +494,7 @@ const NewsForm: React.FC = () => {
                       }}
                       className="text-mauritania-green hover:text-mauritania-green-dark text-sm"
                     >
-                      <FontAwesomeIcon icon={faEye} className="ml-1" /> معاينة
+                      <FontAwesomeIcon icon={faEye} className="me-1" /> {t("معاينة", "Aperçu")}
                     </button>
                     <button
                       type="button"
@@ -509,8 +504,8 @@ const NewsForm: React.FC = () => {
                       }}
                       className="text-blue-600 hover:text-blue-800 text-sm"
                     >
-                      <FontAwesomeIcon icon={faDownload} className="ml-1" />{" "}
-                      تحميل
+                      <FontAwesomeIcon icon={faDownload} className="me-1" />{" "}
+                      {t("تحميل", "Télécharger")}
                     </button>
                   </div>
                 </div>
@@ -523,7 +518,7 @@ const NewsForm: React.FC = () => {
                     />
                   </div>
                   <p className="text-sm text-gray-600">
-                    اسحب الصورة هنا أو انقر للاختيار
+                    {t("اسحب الصورة هنا أو انقر للاختيار", "Glissez l'image ici ou cliquez pour la sélectionner")}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">JPG, PNG, GIF</p>
                 </div>
@@ -532,7 +527,7 @@ const NewsForm: React.FC = () => {
 
             {isEditMode && !imageFile && (
               <p className="text-sm text-gray-500 mt-2">
-                اتركه فارغاً للحفاظ على الصورة الحالية
+                {t("اتركه فارغاً للحفاظ على الصورة الحالية", "Laissez vide pour conserver l'image actuelle")}
               </p>
             )}
           </div>
@@ -542,10 +537,10 @@ const NewsForm: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 focus:outline-none focus:ring-2 focus:ring-mauritania-green focus:ring-opacity-50 disabled:opacity-50"
+              className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 focus:outline-none focus:ring-2 focus:ring-mauritania-green focus:ring-opacity-50 disabled:opacity-50 inline-flex items-center gap-2"
             >
-              <FontAwesomeIcon icon={faSave} className="ml-2" />
-              {isLoading ? "جاري الحفظ..." : "حفظ البيانات"}
+              <FontAwesomeIcon icon={faSave} />
+              {isLoading ? t("جاري الحفظ...", "Enregistrement…") : t("حفظ البيانات", "Enregistrer")}
             </button>
           </div>
         </form>

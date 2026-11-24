@@ -23,7 +23,9 @@ public class MediaResourceConfig implements WebMvcConfigurer {
         Path mediaPath = Paths.get(storagePath).toAbsolutePath().normalize();
         String mediaLocation = mediaPath.toUri().toString();
 
-        registry.addResourceHandler("/assets/**")
+        // Uploaded media is served at /assets/** and, so that it goes through the same
+        // reverse-proxy rule as the API (e.g. https://domaines.gov.mr/api/...), also at /api/assets/**.
+        registry.addResourceHandler("/assets/**", "/api/assets/**")
                 .addResourceLocations(mediaLocation);
     }
 }

@@ -11,11 +11,13 @@ import {
 import { BibliothequeCategorie } from "../../../types/types";
 import { toast } from "react-toastify";
 import AdminLayout from "../AdminLayout";
+import { useT } from "../../../i18n";
 
 const CategorieForm: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const { t } = useT();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -39,7 +41,7 @@ const CategorieForm: React.FC = () => {
           }
         } catch (error) {
           console.error("Error fetching category:", error);
-          toast.error("حدث خطأ أثناء جلب بيانات التصنيف");
+          toast.error(t("حدث خطأ أثناء جلب بيانات التصنيف", "Erreur lors du chargement de la catégorie"));
         } finally {
           setIsLoading(false);
         }
@@ -53,15 +55,15 @@ const CategorieForm: React.FC = () => {
     try {
       if (isEditMode) {
         await updateBibliothequeCategorie(parseInt(id!), data);
-        toast.success("تم تحديث التصنيف بنجاح");
+        toast.success(t("تم تحديث التصنيف بنجاح", "Catégorie mise à jour avec succès"));
       } else {
         await createBibliothequeCategorie(data);
-        toast.success("تمت إضافة التصنيف بنجاح");
+        toast.success(t("تمت إضافة التصنيف بنجاح", "Catégorie ajoutée avec succès"));
       }
       navigate("/admin/bibliotheque/categories");
     } catch (error) {
       console.error("Error saving category:", error);
-      toast.error("حدث خطأ أثناء حفظ البيانات");
+      toast.error(t("حدث خطأ أثناء حفظ البيانات", "Erreur lors de l'enregistrement des données"));
     } finally {
       setIsLoading(false);
     }
@@ -71,14 +73,14 @@ const CategorieForm: React.FC = () => {
     <AdminLayout>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-mauritania-green-dark">
-          {isEditMode ? "تعديل التصنيف" : "إضافة تصنيف جديد"}
+          {isEditMode ? t("تعديل التصنيف", "Modifier la catégorie") : t("إضافة تصنيف جديد", "Ajouter une catégorie")}
         </h1>
         <button
           onClick={() => navigate("/admin/bibliotheque/categories")}
-          className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300"
+          className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-300 inline-flex items-center gap-2"
         >
-          <FontAwesomeIcon icon={faArrowLeft} className="ml-2" />
-          رجوع
+          <FontAwesomeIcon icon={faArrowLeft} className="rtl:rotate-180" />
+          {t("رجوع", "Retour")}
         </button>
       </div>
 
@@ -88,12 +90,13 @@ const CategorieForm: React.FC = () => {
             {/* Arabic name */}
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="nomarabe">
-                الاسم (عربي) *
+                {t("الاسم (عربي)", "Nom en arabe")} *
               </label>
               <input
                 id="nomarabe"
+                dir="rtl"
                 type="text"
-                {...register("nomarabe", { required: "هذا الحقل مطلوب" })}
+                {...register("nomarabe", { required: t("هذا الحقل مطلوب", "Ce champ est obligatoire") })}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                   errors.nomarabe ? "border-red-500" : "border-gray-300"
                 }`}
@@ -108,12 +111,13 @@ const CategorieForm: React.FC = () => {
             {/* French name */}
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="nomfrancais">
-                الاسم (فرنسي) *
+                {t("الاسم (فرنسي)", "Nom en français")} *
               </label>
               <input
                 id="nomfrancais"
+                dir="ltr"
                 type="text"
-                {...register("nomfrancais", { required: "هذا الحقل مطلوب" })}
+                {...register("nomfrancais", { required: t("هذا الحقل مطلوب", "Ce champ est obligatoire") })}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-mauritania-green ${
                   errors.nomfrancais ? "border-red-500" : "border-gray-300"
                 }`}
@@ -131,10 +135,10 @@ const CategorieForm: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 focus:outline-none focus:ring-2 focus:ring-mauritania-green focus:ring-opacity-50 disabled:opacity-50"
+              className="bg-mauritania-green text-white py-2 px-6 rounded-md hover:bg-mauritania-green-dark transition duration-300 focus:outline-none focus:ring-2 focus:ring-mauritania-green focus:ring-opacity-50 disabled:opacity-50 inline-flex items-center gap-2"
             >
-              <FontAwesomeIcon icon={faSave} className="ml-2" />
-              {isLoading ? "جاري الحفظ..." : "حفظ البيانات"}
+              <FontAwesomeIcon icon={faSave} />
+              {isLoading ? t("جاري الحفظ...", "Enregistrement…") : t("حفظ البيانات", "Enregistrer")}
             </button>
           </div>
         </form>

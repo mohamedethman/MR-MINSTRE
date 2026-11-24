@@ -1,13 +1,15 @@
 import React from "react";
 import { NewsItem } from "../types/types";
+import { useT } from "../i18n";
 
 interface NewsCardProps {
   news: NewsItem;
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
+  const { t, dir } = useT();
   return (
-    <div className="bg-white rounded-lg overflow-hidden shadow-custom hover:shadow-lg transition duration-300">
+    <div dir={dir} className="bg-white rounded-lg overflow-hidden shadow-custom hover:shadow-lg transition duration-300">
       <div className="h-48 overflow-hidden">
         <img
           src={news.image}
@@ -27,7 +29,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
           href="#"
           className="text-mauritania-green font-semibold hover:text-mauritania-green-dark transition duration-300"
         >
-          قراءة المزيد
+          {t("قراءة المزيد", "Lire la suite")}
         </a>
       </div>
     </div>
